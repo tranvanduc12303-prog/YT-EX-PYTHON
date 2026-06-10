@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Excel Utilities Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --border:#475569; --accent:#3b82f6; --accent2:#60a5fa;
+  --text:#f8fafc; --text-muted:#94a3b8; --green:#10b981; --red:#ef4444;
+  --r:16px;
+  --shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;
+  overflow: hidden;
+}
+
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: var(--surface);
+    border-right: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding: 0 8px;
+}
+
+.logo-icon {
+    width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+.logo-icon svg { width: 20px; height: 20px; fill: white; }
+.logo h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+
+.nav-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.nav-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.nav-item.active { background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25); }
+
+/* Main Content */
+.main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 40px;
+    background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, transparent 70%);
+    background-attachment: fixed;
+}
+
+.view { display: none; flex-direction: column; height: 100%; }
+.view.active { display: flex; }
+.view-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; color: white; }
+
+/* Components */
+.drop-zone {
+    border: 2px dashed var(--border); border-radius: var(--r);
+    background: rgba(30, 41, 59, 0.4); padding: 48px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    cursor: pointer; transition: all .3s ease; position: relative;
+    backdrop-filter: blur(8px);
+}
+.drop-zone:hover, .drop-zone.over {
+    border-color: var(--accent); background: rgba(59, 130, 246, 0.05);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+}
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.up-icon { width: 56px; height: 56px; background: var(--surface2); border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s; }
+.drop-zone:hover .up-icon { transform: translateY(-4px); }
+.up-icon svg { width: 28px; height: 28px; stroke: var(--accent2); fill: none; stroke-width: 1.8; }
+.drop-zone h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.drop-zone p { color: var(--text-muted); font-size: 13px; }
+
+.btn {
+    padding: 9px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); }
+.btn.primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn.red { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: var(--red); }
+.btn.red:hover { background: rgba(239,68,68,0.2); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+
+/* YouTube Table */
+.toolbar { display: flex; align-items: center; gap: 12px; padding: 20px 0 16px; flex-wrap: wrap; }
+.toolbar-r { margin-left: auto; display: flex; gap: 10px; }
+.tbl-wrap { flex: 1; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+thead { position: sticky; top: 0; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); z-index: 1; }
+th { text-align: left; padding: 16px; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* Email Feature Specifics */
+.email-controls { margin-top: 24px; padding: 24px; background: var(--surface); border-radius: var(--r); border: 1px solid rgba(255,255,255,0.05); }
+.form-group { margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+.form-group label { width: 120px; color: var(--text-muted); font-size: 13px; }
+.form-group input[type="number"] {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: white; padding: 8px 12px; border-radius: 6px; width: 100px;
+}
+.progress-container { margin-top: 20px; display: none; }
+.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #10b981); transition: width 0.3s; }
+.progress-text { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+/* Charts */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.chart-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 24px; }
+.chart-card h3 { font-size: 16px; margin-bottom: 16px; color: var(--text-muted); font-weight: 500; }
+.chart-container { position: relative; height: 300px; width: 100%; }
+
+/* Toast */
+#toast {
+    position: fixed; bottom: 32px; right: 32px; background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.1); padding: 14px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 500; opacity: 0; transform: translateY(12px);
+    transition: all .3s; pointer-events: none; z-index: 99; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+#toast.on { opacity: 1; transform: translateY(0); }
+
+/* Modal */
+.modal {
+    display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; 
+    overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+}
+.modal-content {
+    background-color: var(--surface); margin: 5% auto; padding: 20px;
+    border: 1px solid var(--border); border-radius: var(--r); width: 80%; max-width: 900px;
+    position: relative; box-shadow: var(--shadow);
+}
+.close-modal {
+    color: var(--text-muted); float: right; font-size: 28px; font-weight: bold; cursor: pointer;
+}
+.close-modal:hover { color: white; text-decoration: none; }
+.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; margin-top: 15px; }
+.video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+            </div>
+            <h1>Excel Utilities</h1>
+        </div>
+        
+        <div class="nav-item active" data-target="view-yt">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Excel Downloader
+        </div>
+        <div class="nav-item" data-target="view-channel">
+            <svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
+            Channel Downloader
+        </div>
+        <div class="nav-item" data-target="view-email">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            Email Autofill
+        </div>
+        <div class="nav-item" data-target="view-stats">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            Dashboard & Stats
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        
+        <!-- View: YouTube -->
+        <div class="view active" id="view-yt">
+            <h2 class="view-title">YouTube Downloader</h2>
+            <div class="drop-zone" id="dz-yt">
+                <input type="file" id="fi-yt" accept=".xlsx,.xlsm"/>
+                <div class="up-icon">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h2>Kéo thả file Excel vào đây</h2>
+                <p>Quét link YouTube từ file Excel</p>
+            </div>
+
+            <div id="yt-content" style="display:none; display:flex; flex-direction:column; height:100%;">
+                <div class="toolbar">
+                    <span style="color:var(--text-muted)">Tổng số Kênh tìm thấy: <strong id="tcnt" style="color:white">0</strong></span>
+                    <div class="toolbar-r">
+                        <button class="btn" id="resetYt">↩ File mới</button>
+                    </div>
+                </div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>Tên Kênh</th>
+                                <th>Link Kênh</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-yt"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Channel Downloader -->
+        <div class="view" id="view-channel">
+            <h2 class="view-title">Channel Downloader</h2>
+            <div class="email-controls" style="display:block;">
+                <div class="form-group" style="margin-bottom:0; width: 100%;">
+                    <input type="text" id="channel-url" placeholder="Nhập link Channel hoặc Playlist YouTube..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px 14px; border-radius:8px; font-size:14px; outline:none; min-width: 0;">
+                    <button class="btn primary" id="btn-fetch-channel" style="white-space:nowrap; padding: 10px 16px;">🔍 Quét Video</button>
+                </div>
+            </div>
+
+            <div id="channel-content" style="display:none; flex-direction:column; height:100%; margin-top:20px; flex:1;">
+                <div class="toolbar" style="padding-top:0;">
+                    <span style="color:var(--text-muted)">Tổng: <strong id="channel-tcnt" style="color:white">0</strong> | Kênh/Danh sách: <strong id="channel-name" style="color:white">---</strong></span>
+                    <select id="channel-filter" style="margin-left:16px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:6px 12px; border-radius:6px; font-size:13px; outline:none; cursor:pointer;">
+                        <option value="all" style="background:var(--surface); color:white;">Tất cả</option>
+                        <option value="video" style="background:var(--surface); color:white;">Chỉ video dài</option>
+                        <option value="short" style="background:var(--surface); color:white;">Chỉ video ngắn (Shorts)</option>
+                    </select>
+                    <div class="toolbar-r">
+                        <button class="btn" id="openFolderChannel">📂 Thư mục</button>
+                        <button class="btn red" id="stopDownloadChannel" style="display:none">⏹ Dừng</button>
+                        <button class="btn" id="downloadSelectedChannel">⬇ Tải Đã Chọn</button>
+                        <button class="btn primary" id="downloadAllChannel">⬇ Tải Tất Cả</button>
+                    </div>
+                </div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40px; text-align:center;"><input type="checkbox" id="chk-all-channel"/></th>
+                                <th style="width:50px;">#</th>
+                                <th>Tiêu đề</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-channel"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Email -->
+        <div class="view" id="view-email">
+            <h2 class="view-title">Email Autofill</h2>
+            <div class="drop-zone" id="dz-email">
+                <input type="file" id="fi-email" accept=".xlsx,.xlsm"/>
+                <div class="up-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <h2>Tải lên file Excel để quét Email</h2>
+                <p>Hỗ trợ .xlsx, .xlsm</p>
+            </div>
+
+            <div class="email-controls" id="email-controls" style="display:none;">
+                <h3 style="margin-bottom:16px;">Tùy chỉnh cột & Xử lý</h3>
+                <div class="form-group">
+                    <label>Cột Nguồn (Số):</label>
+                    <input type="number" id="email-src-col" value="1" min="1">
+                    <span style="color:var(--text-muted);font-size:12px;">(1 = A, 2 = B...)</span>
+                </div>
+                <div class="form-group">
+                    <label>Cột Đích (Số):</label>
+                    <input type="number" id="email-tgt-col" value="2" min="1">
+                </div>
+                
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button class="btn primary" id="btn-start-email">▶ Bắt đầu trích xuất</button>
+                    <button class="btn red" id="btn-stop-email" disabled>⏹ Dừng</button>
+                    <button class="btn" id="btn-download-email" style="display:none;">⬇ Tải file kết quả</button>
+                    <button class="btn" id="resetEmail">↩ Hủy</button>
+                </div>
+
+                <div class="progress-container" id="email-progress-container">
+                    <div class="progress-bar"><div class="progress-fill" id="email-progress-fill"></div></div>
+                    <div class="progress-text">
+                        <span id="email-progress-status">Đang xử lý... 0%</span>
+                        <span id="email-stats-text">0/0 hàng - 0 email tìm thấy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Stats -->
+        <div class="view" id="view-stats">
+            <h2 class="view-title">Dashboard & Thống kê</h2>
+            <button class="btn" id="refresh-stats" style="margin-bottom:20px;">🔄 Làm mới dữ liệu</button>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>YouTube: Tỷ lệ Link hợp lệ</h3>
+                    <div class="chart-container">
+                        <canvas id="ytChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>YouTube: Trạng thái tải về</h3>
+                    <div class="chart-container">
+                        <canvas id="ytDownloadChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card" style="grid-column: span 2;">
+                    <h3>Email: Tổng số trích xuất theo Sheet</h3>
+                    <div class="chart-container" style="height: 350px;">
+                        <canvas id="emailChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<div id="videoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeVideoModal()">&times;</span>
+        <h3 id="videoModalTitle" style="color: white; margin-bottom: 10px; padding-right: 30px; font-size: 18px;"></h3>
+        <div class="video-wrapper">
+            <iframe id="videoIframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+function getEmbedUrl(url) {
+    let videoId = '';
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes('youtube.com')) {
+            if (urlObj.pathname === '/watch') {
+                videoId = urlObj.searchParams.get('v');
+            } else if (urlObj.pathname.startsWith('/shorts/')) {
+                videoId = urlObj.pathname.split('/')[2];
+            } else if (urlObj.pathname.startsWith('/embed/')) {
+                return url;
+            }
+        } else if (urlObj.hostname.includes('youtu.be')) {
+            videoId = urlObj.pathname.slice(1);
+        }
+    } catch (e) {
+        // Invalid URL
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+}
+
+function openVideoModal(url, title) {
+    const embedUrl = getEmbedUrl(url);
+    if (!embedUrl) {
+        window.open(url, '_blank');
+        return;
+    }
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoIframe');
+    const titleEl = document.getElementById('videoModalTitle');
+    titleEl.textContent = title || 'Video';
+    iframe.src = embedUrl;
+    modal.style.display = 'block';
+}
+
+function closeVideoModal() {
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoIframe');
+    modal.style.display = 'none';
+    iframe.src = '';
+}
+
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('videoModal');
+    if (event.target == modal) {
+        closeVideoModal();
+    }
+});
+// --- Navigation ---
+const navItems = document.querySelectorAll('.nav-item');
+const views = document.querySelectorAll('.view');
+let currentChartInstances = {};
+
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        navItems.forEach(n => n.classList.remove('active'));
+        views.forEach(v => v.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById(item.dataset.target).classList.add('active');
+        
+        if(item.dataset.target === 'view-stats') {
+            loadStats();
+        }
+    });
+});
+
+function toast(msg, ms = 3000) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('on');
+    setTimeout(() => el.classList.remove('on'), ms);
+}
+
+// --- YouTube Logic ---
+const dzYt = document.getElementById('dz-yt');
+const fiYt = document.getElementById('fi-yt');
+let ytRows = [];
+
+fiYt.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    document.getElementById('dz-yt').querySelector('h2').textContent = '⏳ Đang phân tích thông tin kênh... (Vui lòng đợi)';
+    
+    const fd = new FormData();
+    fd.append('file', file);
+    
+    try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.error) { toast('❌ ' + data.error); return; }
+        
+        const ytChannels = data.channels;
+        dzYt.style.display = 'none';
+        document.getElementById('yt-content').style.display = 'flex';
+        document.getElementById('tcnt').textContent = data.total_channels;
+        
+        renderYtTable(ytChannels);
+        loadStats(); // Update chart on successful upload
+    } catch(err) { toast('❌ Lỗi kết nối server'); }
+    
+    document.getElementById('dz-yt').querySelector('h2').textContent = 'Kéo thả file Excel vào đây';
+});
+
+function renderYtTable(channels) {
+    const tb = document.getElementById('tb-yt');
+    tb.innerHTML = channels.map((c, i) => `
+        <tr>
+            <td>${i+1}</td>
+            <td style="font-weight:500; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.channel}">${c.channel}</td>
+            <td><a href="${c.url}" target="_blank" style="color:var(--text-muted); font-size:12px; text-decoration:none;">${c.url}</a></td>
+            <td>
+                <button class="btn" data-url="${c.url}" onclick="fetchChannelVideos(this.dataset.url)" style="color:var(--accent2); border-color:var(--accent2); background:rgba(96,165,250,0.1);">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
+                    Tải Video Từ Kênh
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function fetchChannelVideos(url) {
+    // Switch view to channel downloader
+    document.querySelector('.nav-item[data-target="view-channel"]').click();
+    document.getElementById('channel-url').value = url;
+    document.getElementById('btn-fetch-channel').click();
+}
+
+document.getElementById('resetYt').addEventListener('click', () => {
+    dzYt.style.display = 'flex';
+    document.getElementById('yt-content').style.display = 'none';
+    fiYt.value = '';
+});
+
+// --- Email Logic ---
+const dzEmail = document.getElementById('dz-email');
+const fiEmail = document.getElementById('fi-email');
+const emailControls = document.getElementById('email-controls');
+let emailFileSelected = null;
+let emailPollInterval = null;
+
+fiEmail.addEventListener('change', e => {
+    emailFileSelected = e.target.files[0];
+    if(emailFileSelected) {
+        dzEmail.style.display = 'none';
+        emailControls.style.display = 'block';
+        document.getElementById('btn-download-email').style.display = 'none';
+    }
+});
+
+document.getElementById('resetEmail').addEventListener('click', () => {
+    dzEmail.style.display = 'flex';
+    emailControls.style.display = 'none';
+    fiEmail.value = '';
+    emailFileSelected = null;
+    stopEmailPolling();
+});
+
+document.getElementById('btn-start-email').addEventListener('click', async () => {
+    if(!emailFileSelected) return;
+    
+    const fd = new FormData();
+    fd.append('file', emailFileSelected);
+    fd.append('source_col', document.getElementById('email-src-col').value);
+    fd.append('target_col', document.getElementById('email-tgt-col').value);
+    
+    document.getElementById('btn-start-email').disabled = true;
+    document.getElementById('btn-stop-email').disabled = false;
+    document.getElementById('email-progress-container').style.display = 'block';
+    
+    try {
+        const res = await fetch('/upload_email_file', { method: 'POST', body: fd });
+        const data = await res.json();
+        if(data.error) { toast('❌ ' + data.error); resetEmailBtns(); return; }
+        
+        // Bắt đầu poll
+        emailPollInterval = setInterval(pollEmailProgress, 1000);
+    } catch(e) {
+        toast('❌ Lỗi gửi file');
+        resetEmailBtns();
+    }
+});
+
+document.getElementById('btn-stop-email').addEventListener('click', async () => {
+    fetch('/stop_email_process', { method: 'POST' });
+    document.getElementById('btn-stop-email').disabled = true;
+});
+
+async function pollEmailProgress() {
+    try {
+        const res = await fetch('/email_progress');
+        const data = await res.json();
+        
+        document.getElementById('email-progress-fill').style.width = data.progress + '%';
+        document.getElementById('email-progress-status').textContent = `Đang xử lý... ${data.progress}%`;
+        document.getElementById('email-stats-text').textContent = `${data.processed_rows}/${data.total_rows} hàng - ${data.emails_found} email`;
+        
+        if (data.status === 'completed' || data.status === 'stopped' || data.status === 'error') {
+            stopEmailPolling();
+            resetEmailBtns();
+            document.getElementById('email-progress-status').textContent = data.status === 'completed' ? 'Hoàn tất!' : (data.status === 'error' ? 'Lỗi!' : 'Đã dừng!');
+            if (data.status === 'completed' || (data.status === 'stopped' && data.processed_rows > 0)) {
+                document.getElementById('btn-download-email').style.display = 'inline-flex';
+            }
+            if (data.error_msg) toast('❌ ' + data.error_msg);
+            else toast('✅ Đã xong tiến trình email!');
+        }
+    } catch(e) { console.log("Lỗi poll", e); }
+}
+
+function stopEmailPolling() {
+    if(emailPollInterval) clearInterval(emailPollInterval);
+}
+
+function resetEmailBtns() {
+    document.getElementById('btn-start-email').disabled = false;
+    document.getElementById('btn-stop-email').disabled = true;
+}
+
+document.getElementById('btn-download-email').addEventListener('click', () => {
+    window.location.href = '/download_email_result';
+});
+
+// --- Chart/Stats Logic ---
+document.getElementById('refresh-stats').addEventListener('click', loadStats);
+
+function createChart(id, type, data, options) {
+    const ctx = document.getElementById(id).getContext('2d');
+    if (currentChartInstances[id]) currentChartInstances[id].destroy();
+    
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+    
+    currentChartInstances[id] = new Chart(ctx, { type, data, options });
+}
+
+async function loadStats() {
+    try {
+        const res = await fetch('/stats');
+        const data = await res.json();
+        
+        const aStats = data.app_stats;
+        
+        // YT Link Validity Chart (Doughnut)
+        const invalidLinks = aStats.yt_total_links - aStats.yt_valid_links;
+        createChart('ytChart', 'doughnut', {
+            labels: ['Hợp lệ', 'Không hợp lệ'],
+            datasets: [{
+                data: [aStats.yt_valid_links, invalidLinks],
+                backgroundColor: ['#10b981', '#ef4444'],
+                borderWidth: 0
+            }]
+        }, { responsive: true, maintainAspectRatio: false });
+
+        // YT Download Status (Bar)
+        const pending = Math.max(0, aStats.yt_valid_links - aStats.yt_downloaded);
+        createChart('ytDownloadChart', 'bar', {
+            labels: ['Đã tải', 'Chưa tải (Hợp lệ)'],
+            datasets: [{
+                label: 'Số lượng Video',
+                data: [aStats.yt_downloaded, pending],
+                backgroundColor: ['#3b82f6', '#64748b'],
+                borderRadius: 4
+            }]
+        }, { 
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        });
+
+        // YT Channel Bar Chart
+        const ytChStats = aStats.yt_channel_stats || {};
+        const ytChNames = Object.keys(ytChStats);
+        const ytChCounts = Object.values(ytChStats);
+        
+        createChart('ytChannelChart', 'bar', {
+            labels: ytChNames.length ? ytChNames : ['Chưa có dữ liệu'],
+            datasets: [{
+                label: 'Số video trong Excel',
+                data: ytChCounts.length ? ytChCounts : [0],
+                backgroundColor: '#f59e0b',
+                borderRadius: 4
+            }]
+        }, { 
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        });
+
+        // Email Bar Chart
+        const sheetNames = Object.keys(data.email_sheet_stats);
+        const emailCounts = Object.values(data.email_sheet_stats);
+        
+        createChart('emailChart', 'bar', {
+            labels: sheetNames.length ? sheetNames : ['Chưa có dữ liệu'],
+            datasets: [{
+                label: 'Email trích xuất',
+                data: emailCounts.length ? emailCounts : [0],
+                backgroundColor: '#8b5cf6',
+                borderRadius: 4
+            }]
+        }, { 
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } } }
+        });
+        
+    } catch (e) {
+        toast('❌ Lỗi tải thống kê');
+    }
+}
+
+// --- Channel Logic ---
+const btnFetchChannel = document.getElementById('btn-fetch-channel');
+const channelUrlInput = document.getElementById('channel-url');
+const channelContent = document.getElementById('channel-content');
+let channelVideos = [];
+
+document.getElementById('channel-filter').addEventListener('change', (e) => {
+    filterAndRenderChannelVideos(e.target.value);
+});
+
+function filterAndRenderChannelVideos(filterType) {
+    let filteredVideos = channelVideos;
+    if (filterType === 'video') {
+        filteredVideos = channelVideos.filter(v => v.type === 'video');
+    } else if (filterType === 'short') {
+        filteredVideos = channelVideos.filter(v => v.type === 'short');
+    }
+    
+    document.getElementById('channel-tcnt').textContent = filteredVideos.length;
+    renderChannelTable(filteredVideos);
+}
+
+btnFetchChannel.addEventListener('click', async () => {
+    const url = channelUrlInput.value.trim();
+    if (!url) { toast('❌ Vui lòng nhập link!'); return; }
+    
+    btnFetchChannel.disabled = true;
+    btnFetchChannel.textContent = '⏳ Đang quét...';
+    
+    try {
+        const res = await fetch('/fetch_channel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        
+        if (data.error) { toast('❌ ' + data.error); } 
+        else {
+            channelVideos = data.videos;
+            document.getElementById('channel-filter').value = 'all';
+            document.getElementById('channel-name').textContent = data.channel_title;
+            channelContent.style.display = 'flex';
+            filterAndRenderChannelVideos('all');
+            toast('✅ Đã quét xong!');
+        }
+    } catch(err) { toast('❌ Lỗi kết nối'); }
+    
+    btnFetchChannel.disabled = false;
+    btnFetchChannel.textContent = '🔍 Quét Video';
+});
+
+function renderChannelTable(videos) {
+    const tb = document.getElementById('tb-channel');
+    tb.innerHTML = videos.map((v, i) => `
+        <tr>
+            <td style="text-align:center;"><input type="checkbox" class="chk-channel-row" data-url="${v.url}"/></td>
+            <td>${i+1}</td>
+            <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" title="${v.title}" data-url="${v.url}" data-title="${(v.title || '').replace(/"/g, '&quot;')}" onclick="openVideoModal(this.dataset.url, this.dataset.title)">${v.title}</td>
+            <td>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <a href="javascript:void(0)" data-url="${v.url}" data-title="${(v.title || '').replace(/"/g, '&quot;')}" onclick="openVideoModal(this.dataset.url, this.dataset.title)" style="color:var(--accent2);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Xem Video</a>
+                    <a href="javascript:void(0)" data-url="${v.url}" onclick="triggerChannelDownload([this.dataset.url])" style="color:var(--green);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Tải Xuống</a>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('chk-all-channel').checked = false;
+}
+
+document.getElementById('chk-all-channel').addEventListener('change', e => {
+    const isChecked = e.target.checked;
+    document.querySelectorAll('.chk-channel-row').forEach(chk => chk.checked = isChecked);
+});
+
+async function triggerChannelDownload(urls) {
+    if (!urls.length) { toast('❌ Không có video nào được chọn'); return; }
+    
+    document.getElementById('downloadSelectedChannel').disabled = true;
+    document.getElementById('downloadAllChannel').disabled = true;
+    document.getElementById('stopDownloadChannel').style.display = 'inline-flex';
+    
+    try {
+        const res = await fetch('/download_all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls })
+        });
+        const data = await res.json();
+        toast(data.error ? '❌ ' + data.error : '✅ ' + data.message);
+        loadStats(); // Cập nhật biểu đồ sau khi tải
+    } catch(e) { toast('❌ Lỗi tải'); }
+    
+    document.getElementById('downloadSelectedChannel').disabled = false;
+    document.getElementById('downloadAllChannel').disabled = false;
+    document.getElementById('stopDownloadChannel').style.display = 'none';
+}
+
+document.getElementById('downloadSelectedChannel').addEventListener('click', () => {
+    const selectedUrls = Array.from(document.querySelectorAll('.chk-channel-row:checked')).map(chk => chk.dataset.url);
+    triggerChannelDownload(selectedUrls);
+});
+
+document.getElementById('downloadAllChannel').addEventListener('click', () => {
+    const allUrls = Array.from(document.querySelectorAll('.chk-channel-row')).map(chk => chk.dataset.url);
+    triggerChannelDownload(allUrls);
+});
+
+document.getElementById('stopDownloadChannel').addEventListener('click', async () => {
+    fetch('/stop_download', { method: 'POST' });
+});
+
+document.getElementById('openFolderChannel').addEventListener('click', async () => {
+    fetch('/open_folder', { method: 'POST' });
+});
+</script>
+</body>
+</html>
