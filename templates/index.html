@@ -137,6 +137,17 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #10b981); transition: width 0.3s; }
 .progress-text { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
 
+/* Stat Cards */
+.stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px; }
+.stat-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 20px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow); position: relative; overflow: hidden; transition: transform 0.2s; }
+.stat-card:hover { transform: translateY(-3px); }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); border-top-left-radius: var(--r); border-bottom-left-radius: var(--r); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.yellow::before { background: #f59e0b; }
+.stat-card.purple::before { background: #8b5cf6; }
+.stat-title { color: var(--text-muted); font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 32px; font-weight: 700; color: white; line-height: 1; }
+
 /* Charts */
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .chart-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 24px; }
@@ -322,8 +333,30 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 
         <!-- View: Stats -->
         <div class="view" id="view-stats">
-            <h2 class="view-title">Dashboard & Thống kê</h2>
-            <button class="btn" id="refresh-stats" style="margin-bottom:20px;">🔄 Làm mới dữ liệu</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 class="view-title" style="margin-bottom:0;">Dashboard & Thống kê</h2>
+                <button class="btn" id="refresh-stats">🔄 Làm mới dữ liệu</button>
+            </div>
+            
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <span class="stat-title">Tổng số Link YouTube</span>
+                    <span class="stat-value" id="stat-total-links">0</span>
+                </div>
+                <div class="stat-card green">
+                    <span class="stat-title">Link Hợp Lệ</span>
+                    <span class="stat-value" id="stat-valid-links">0</span>
+                </div>
+                <div class="stat-card yellow">
+                    <span class="stat-title">Video Đã Tải</span>
+                    <span class="stat-value" id="stat-downloaded">0</span>
+                </div>
+                <div class="stat-card purple">
+                    <span class="stat-title">Email Đã Trích Xuất</span>
+                    <span class="stat-value" id="stat-emails">0</span>
+                </div>
+            </div>
+
             <div class="charts-grid">
                 <div class="chart-card">
                     <h3>YouTube: Tỷ lệ Link hợp lệ</h3>
@@ -337,9 +370,15 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
                         <canvas id="ytDownloadChart"></canvas>
                     </div>
                 </div>
-                <div class="chart-card" style="grid-column: span 2;">
-                    <h3>Email: Tổng số trích xuất theo Sheet</h3>
-                    <div class="chart-container" style="height: 350px;">
+                <div class="chart-card">
+                    <h3>YouTube: Thống kê Kênh</h3>
+                    <div class="chart-container">
+                        <canvas id="ytChannelChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Email: Trích xuất theo Sheet</h3>
+                    <div class="chart-container">
                         <canvas id="emailChart"></canvas>
                     </div>
                 </div>
@@ -604,6 +643,12 @@ async function loadStats() {
         const data = await res.json();
         
         const aStats = data.app_stats;
+
+        // Update Stat Cards
+        document.getElementById('stat-total-links').textContent = aStats.yt_total_links || 0;
+        document.getElementById('stat-valid-links').textContent = aStats.yt_valid_links || 0;
+        document.getElementById('stat-downloaded').textContent = aStats.yt_downloaded || 0;
+        document.getElementById('stat-emails').textContent = aStats.email_extracted_total || 0;
         
         // YT Link Validity Chart (Doughnut)
         const invalidLinks = aStats.yt_total_links - aStats.yt_valid_links;

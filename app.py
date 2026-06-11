@@ -222,14 +222,21 @@ def upload():
             meta_results = list(executor.map(get_meta, links))
             
         unique_channels = {}
+        channel_counts = {}
         for m in meta_results:
             if m and m["url"]:
                 unique_channels[m["url"]] = m["channel"]
+                channel_counts[m["channel"]] = channel_counts.get(m["channel"], 0) + 1
 
         channels_list = [{"channel": v, "url": k} for k, v in unique_channels.items()]
         
         app_stats["yt_total_links"] += len(links)
         app_stats["yt_valid_links"] += len([l for l in links if l["valid"]])
+        
+        if "yt_channel_stats" not in app_stats:
+            app_stats["yt_channel_stats"] = {}
+        for ch, count in channel_counts.items():
+            app_stats["yt_channel_stats"][ch] = app_stats["yt_channel_stats"].get(ch, 0) + count
 
         return jsonify({
             "filename": file.filename,
