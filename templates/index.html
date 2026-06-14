@@ -197,9 +197,21 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
             <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             Excel Downloader
         </div>
+        <div class="nav-item" data-target="view-direct">
+            <svg viewBox="0 0 24 24"><path d="M10 15v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4h8zm12 0v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4h8zM10 3v8H2V5a2 2 0 0 1 2-2h6zm12 0v8h-8V5a2 2 0 0 1 2-2h6z"></path></svg>
+            Direct Link Downloader
+        </div>
         <div class="nav-item" data-target="view-channel">
             <svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
-            Channel Downloader
+            Các kênh
+        </div>
+        <div class="nav-item" data-target="view-tiktok">
+            <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4h3.5a5.5 5.5 0 0 0 5.5 5.5h-1v-2a3.5 3.5 0 0 1-3.5-3.5H13v12a2 2 0 1 1-2-2v-2a4 4 0 0 0-2 0z"></path></svg>
+            Tải các kênh TikTok
+        </div>
+        <div class="nav-item" data-target="view-tiktok-channel">
+            <svg viewBox="0 0 24 24"><path d="M10 15v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4h8zm12 0v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4h8zM10 3v8H2V5a2 2 0 0 1 2-2h6zm12 0v8h-8V5a2 2 0 0 1 2-2h6z"></path></svg>
+            Nhập link TikTok
         </div>
         <div class="nav-item" data-target="view-email">
             <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
@@ -249,6 +261,42 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
             </div>
         </div>
 
+        <!-- View: Direct Link Downloader -->
+        <div class="view" id="view-direct">
+            <h2 class="view-title">Nhập 1 link</h2>
+            <p style="color:var(--text-muted); margin-bottom: 20px;">Dán link YouTube hoặc TikTok vào ô dưới đây để tải về video theo yêu cầu (chọn chất lượng, tải MP3).</p>
+            
+            <div class="email-controls" style="display:block;">
+                <div class="form-group" style="margin-bottom:0; width: 100%;">
+                    <input type="text" id="direct-url" placeholder="Nhập link YouTube hoặc TikTok..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:12px 16px; border-radius:8px; font-size:15px; outline:none; min-width: 0;">
+                    <button class="btn primary" id="btn-fetch-direct" style="white-space:nowrap; padding: 12px 20px; font-size: 15px;">🔍 Lấy Dữ Liệu</button>
+                </div>
+            </div>
+
+            <div id="direct-content" style="display:none; flex-direction:column; margin-top:20px; background: var(--surface); padding: 24px; border-radius: var(--r); border: 1px solid rgba(255,255,255,0.05); box-shadow: var(--shadow);">
+                <div style="display:flex; gap: 20px;">
+                    <div style="width: 240px; flex-shrink: 0; background: rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden; position: relative;">
+                        <img id="direct-thumbnail" src="" style="width: 100%; height: auto; display: block;" alt="Thumbnail">
+                    </div>
+                    <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
+                        <h3 id="direct-title" style="font-size: 18px; margin-bottom: 12px; color: white;">Title</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 20px;">Thời lượng: <strong id="direct-duration" style="color:white;">0</strong> giây</p>
+                        
+                        <div style="display:flex; gap: 10px; align-items:center;">
+                            <select id="direct-format-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px 14px; border-radius:8px; font-size:14px; outline:none; cursor:pointer; min-width: 200px;">
+                                <!-- Options populated via JS -->
+                            </select>
+                            
+                            <button class="btn primary" id="btn-download-direct" style="padding: 10px 20px; font-size:14px;">⬇ Tải Xuống</button>
+                            <button class="btn red" id="btn-stop-direct" style="display:none; padding: 10px 20px; font-size:14px;">⏹ Dừng</button>
+                            <button class="btn" id="btn-open-direct-folder" style="padding: 10px 20px; font-size:14px;">📂 Mở Thư Mục</button>
+                        </div>
+                        <div id="direct-progress-text" style="color: var(--accent2); margin-top: 12px; font-size: 13px; font-weight: 500;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- View: Channel Downloader -->
         <div class="view" id="view-channel">
             <h2 class="view-title">Channel Downloader</h2>
@@ -285,6 +333,77 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
                             </tr>
                         </thead>
                         <tbody id="tb-channel"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: TikTok Downloader (Excel) -->
+        <div class="view" id="view-tiktok">
+            <h2 class="view-title">Tải các kênh TikTok</h2>
+            <div class="drop-zone" id="dz-tiktok">
+                <input type="file" id="fi-tiktok" accept=".xlsx,.xlsm"/>
+                <div class="up-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4h3.5a5.5 5.5 0 0 0 5.5 5.5h-1v-2a3.5 3.5 0 0 1-3.5-3.5H13v12a2 2 0 1 1-2-2v-2a4 4 0 0 0-2 0z"></path></svg>
+                </div>
+                <h2>Kéo thả file Excel vào đây</h2>
+                <p>Quét link/tên TikTok từ file Excel</p>
+            </div>
+
+            <div id="tiktok-content" style="display:none; display:flex; flex-direction:column; height:100%;">
+                <div class="toolbar">
+                    <span style="color:var(--text-muted)">Tổng số Kênh tìm thấy: <strong id="tiktok-channel-cnt" style="color:white">0</strong></span>
+                    <div class="toolbar-r">
+                        <button class="btn" id="resetTiktok">↩ File mới</button>
+                    </div>
+                </div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>Tên Kênh</th>
+                                <th>Link Kênh</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-tiktok"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: TikTok Channel & Direct Downloader -->
+        <div class="view" id="view-tiktok-channel">
+            <h2 class="view-title">Nhập link TikTok</h2>
+            <div class="email-controls" style="display:block;">
+                <div class="form-group" style="margin-bottom:0; width: 100%;">
+                    <input type="text" id="tiktok-channel-url" placeholder="Nhập link TikTok (Profile hoặc Video)..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px 14px; border-radius:8px; font-size:14px; outline:none; min-width: 0;">
+                    <button class="btn primary" id="btn-fetch-tiktok-channel" style="white-space:nowrap; padding: 10px 16px;">🔍 Quét Video</button>
+                </div>
+            </div>
+
+            <div id="tiktok-channel-content" style="display:none; flex-direction:column; height:100%; margin-top:20px; flex:1;">
+                <div class="toolbar" style="padding-top:0;">
+                    <span style="color:var(--text-muted)">Tổng: <strong id="tiktok-channel-tcnt" style="color:white">0</strong> | Kênh/Danh sách: <strong id="tiktok-channel-name" style="color:white">---</strong></span>
+                    <div class="toolbar-r">
+                        <button class="btn" id="openFolderTiktokChannel">📂 Thư mục</button>
+                        <button class="btn red" id="stopDownloadTiktokChannel" style="display:none">⏹ Dừng</button>
+                        <button class="btn" id="downloadSelectedTiktokChannel">⬇ Tải Đã Chọn</button>
+                        <button class="btn primary" id="downloadAllTiktokChannel">⬇ Tải Tất Cả</button>
+                    </div>
+                </div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40px; text-align:center;"><input type="checkbox" id="chk-all-tiktok-channel"/></th>
+                                <th style="width:50px;">#</th>
+                                <th>Tiêu đề</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-tiktok-channel"></tbody>
                     </table>
                 </div>
             </div>
@@ -535,6 +654,164 @@ document.getElementById('resetYt').addEventListener('click', () => {
     fiYt.value = '';
 });
 
+// --- TikTok Logic ---
+const dzTiktok = document.getElementById('dz-tiktok');
+const fiTiktok = document.getElementById('fi-tiktok');
+const tiktokContent = document.getElementById('tiktok-content');
+
+fiTiktok.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    document.getElementById('dz-tiktok').querySelector('h2').textContent = '⏳ Đang quét kênh TikTok... (Vui lòng đợi)';
+    
+    const fd = new FormData();
+    fd.append('file', file);
+    
+    try {
+        const res = await fetch('/upload_tiktok', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.error) { toast('❌ ' + data.error); } 
+        else {
+            dzTiktok.style.display = 'none';
+            tiktokContent.style.display = 'flex';
+            document.getElementById('tiktok-channel-cnt').textContent = data.total_channels;
+            
+            renderTiktokTable(data.channels);
+            toast('✅ Quét thành công!');
+        }
+    } catch(err) { toast('❌ Lỗi kết nối server'); }
+    
+    document.getElementById('dz-tiktok').querySelector('h2').textContent = 'Kéo thả file Excel vào đây';
+});
+
+function renderTiktokTable(channels) {
+    const tb = document.getElementById('tb-tiktok');
+    tb.innerHTML = channels.map((c, i) => `
+        <tr>
+            <td>${i+1}</td>
+            <td style="font-weight:500; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.channel}">${c.channel}</td>
+            <td><a href="${c.url}" target="_blank" style="color:var(--text-muted); font-size:12px; text-decoration:none;">${c.url}</a></td>
+            <td>
+                <button class="btn" data-url="${c.url}" onclick="fetchTiktokChannelVideos(this.dataset.url)" style="color:var(--accent2); border-color:var(--accent2); background:rgba(96,165,250,0.1);">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
+                    Tải Video Từ Kênh
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function fetchTiktokChannelVideos(url) {
+    document.querySelector('.nav-item[data-target="view-tiktok-channel"]').click();
+    document.getElementById('tiktok-channel-url').value = url;
+    document.getElementById('btn-fetch-tiktok-channel').click();
+}
+
+document.getElementById('resetTiktok').addEventListener('click', () => {
+    dzTiktok.style.display = 'flex';
+    tiktokContent.style.display = 'none';
+    fiTiktok.value = '';
+});
+
+// --- TikTok Channel & Direct Downloader Logic ---
+const btnFetchTiktokChannel = document.getElementById('btn-fetch-tiktok-channel');
+const tiktokChannelUrlInput = document.getElementById('tiktok-channel-url');
+const tiktokChannelContent = document.getElementById('tiktok-channel-content');
+
+btnFetchTiktokChannel.addEventListener('click', async () => {
+    const url = tiktokChannelUrlInput.value.trim();
+    if (!url) { toast('❌ Vui lòng nhập link!'); return; }
+    
+    btnFetchTiktokChannel.disabled = true;
+    btnFetchTiktokChannel.textContent = '⏳ Đang quét...';
+    
+    try {
+        const res = await fetch('/fetch_channel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        
+        if (data.error) { toast('❌ ' + data.error); } 
+        else {
+            document.getElementById('tiktok-channel-name').textContent = data.channel_title || "TikTok";
+            tiktokChannelContent.style.display = 'flex';
+            document.getElementById('tiktok-channel-tcnt').textContent = data.videos.length;
+            renderTiktokChannelTable(data.videos);
+            toast('✅ Đã quét xong!');
+        }
+    } catch(err) { toast('❌ Lỗi kết nối'); }
+    
+    btnFetchTiktokChannel.disabled = false;
+    btnFetchTiktokChannel.textContent = '🔍 Quét Video';
+});
+
+function renderTiktokChannelTable(videos) {
+    const tb = document.getElementById('tb-tiktok-channel');
+    tb.innerHTML = videos.map((v, i) => `
+        <tr>
+            <td style="text-align:center;"><input type="checkbox" class="chk-tiktok-channel-row" data-url="${v.url}"/></td>
+            <td>${i+1}</td>
+            <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${v.title}">${v.title}</td>
+            <td>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <a href="${v.url}" target="_blank" style="color:var(--accent2);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Xem Video</a>
+                    <a href="javascript:void(0)" data-url="${v.url}" onclick="triggerTiktokChannelDownload([this.dataset.url])" style="color:var(--green);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Tải Xuống</a>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('chk-all-tiktok-channel').checked = false;
+}
+
+document.getElementById('chk-all-tiktok-channel').addEventListener('change', e => {
+    const isChecked = e.target.checked;
+    document.querySelectorAll('.chk-tiktok-channel-row').forEach(chk => chk.checked = isChecked);
+});
+
+async function triggerTiktokChannelDownload(urls) {
+    if (!urls.length) { toast('❌ Không có video nào được chọn'); return; }
+    
+    document.getElementById('downloadSelectedTiktokChannel').disabled = true;
+    document.getElementById('downloadAllTiktokChannel').disabled = true;
+    document.getElementById('stopDownloadTiktokChannel').style.display = 'inline-flex';
+    
+    try {
+        const res = await fetch('/download_all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls })
+        });
+        const data = await res.json();
+        toast(data.error ? '❌ ' + data.error : '✅ ' + data.message);
+    } catch(e) { toast('❌ Lỗi tải'); }
+    
+    document.getElementById('downloadSelectedTiktokChannel').disabled = false;
+    document.getElementById('downloadAllTiktokChannel').disabled = false;
+    document.getElementById('stopDownloadTiktokChannel').style.display = 'none';
+}
+
+document.getElementById('downloadSelectedTiktokChannel').addEventListener('click', () => {
+    const selectedUrls = Array.from(document.querySelectorAll('.chk-tiktok-channel-row:checked')).map(chk => chk.dataset.url);
+    triggerTiktokChannelDownload(selectedUrls);
+});
+
+document.getElementById('downloadAllTiktokChannel').addEventListener('click', () => {
+    const allUrls = Array.from(document.querySelectorAll('.chk-tiktok-channel-row')).map(chk => chk.dataset.url);
+    triggerTiktokChannelDownload(allUrls);
+});
+
+document.getElementById('stopDownloadTiktokChannel').addEventListener('click', async () => {
+    fetch('/stop_download', { method: 'POST' });
+});
+
+document.getElementById('openFolderTiktokChannel').addEventListener('click', async () => {
+    fetch('/open_folder', { method: 'POST' });
+});
+
 // --- Email Logic ---
 const dzEmail = document.getElementById('dz-email');
 const fiEmail = document.getElementById('fi-email');
@@ -717,6 +994,96 @@ async function loadStats() {
     }
 }
 
+// --- Direct Link Logic ---
+const btnFetchDirect = document.getElementById('btn-fetch-direct');
+const directUrlInput = document.getElementById('direct-url');
+const directContent = document.getElementById('direct-content');
+const formatSelect = document.getElementById('direct-format-select');
+let currentDirectData = null;
+
+btnFetchDirect.addEventListener('click', async () => {
+    const url = directUrlInput.value.trim();
+    if (!url) { toast('❌ Vui lòng nhập link!'); return; }
+    
+    btnFetchDirect.disabled = true;
+    btnFetchDirect.textContent = '⏳ Đang lấy dữ liệu...';
+    directContent.style.display = 'none';
+    
+    try {
+        const res = await fetch('/api/direct_info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        
+        if (data.error) { toast('❌ ' + data.error); } 
+        else {
+            currentDirectData = data;
+            document.getElementById('direct-title').textContent = data.title;
+            document.getElementById('direct-duration').textContent = data.duration;
+            document.getElementById('direct-thumbnail').src = data.thumbnail || '';
+            
+            formatSelect.innerHTML = data.formats.map(f => `<option value="${f.format_id}" data-type="${f.type}">${f.label}</option>`).join('');
+            
+            directContent.style.display = 'flex';
+            toast('✅ Đã lấy dữ liệu!');
+        }
+    } catch(err) { toast('❌ Lỗi kết nối'); }
+    
+    btnFetchDirect.disabled = false;
+    btnFetchDirect.textContent = '🔍 Lấy Dữ Liệu';
+});
+
+document.getElementById('btn-download-direct').addEventListener('click', async () => {
+    if (!currentDirectData) return;
+    
+    const selectedOption = formatSelect.options[formatSelect.selectedIndex];
+    const format_id = selectedOption.value;
+    const type = selectedOption.dataset.type;
+    
+    document.getElementById('btn-download-direct').disabled = true;
+    document.getElementById('btn-stop-direct').style.display = 'inline-flex';
+    document.getElementById('direct-progress-text').textContent = '⏳ Đang tải xuống... Vui lòng đợi.';
+    
+    try {
+        const res = await fetch('/api/direct_download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                url: currentDirectData.url,
+                format_id: format_id,
+                type: type
+            })
+        });
+        const data = await res.json();
+        
+        if (data.error) {
+            toast('❌ ' + data.error);
+            document.getElementById('direct-progress-text').textContent = '❌ Lỗi: ' + data.error;
+        } else {
+            toast('✅ ' + data.message);
+            document.getElementById('direct-progress-text').textContent = '✅ ' + data.message;
+            loadStats();
+        }
+    } catch(err) { 
+        toast('❌ Lỗi kết nối');
+        document.getElementById('direct-progress-text').textContent = '❌ Lỗi kết nối server.';
+    }
+    
+    document.getElementById('btn-download-direct').disabled = false;
+    document.getElementById('btn-stop-direct').style.display = 'none';
+});
+
+document.getElementById('btn-stop-direct').addEventListener('click', async () => {
+    fetch('/stop_download', { method: 'POST' });
+    document.getElementById('direct-progress-text').textContent = '⏹ Đang dừng tải...';
+});
+
+document.getElementById('btn-open-direct-folder').addEventListener('click', async () => {
+    fetch('/open_folder', { method: 'POST' });
+});
+
 // --- Channel Logic ---
 const btnFetchChannel = document.getElementById('btn-fetch-channel');
 const channelUrlInput = document.getElementById('channel-url');
@@ -836,3 +1203,4 @@ document.getElementById('openFolderChannel').addEventListener('click', async () 
 </script>
 </body>
 </html>
+</html></html>

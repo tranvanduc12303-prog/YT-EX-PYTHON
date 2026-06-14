@@ -89,6 +89,40 @@ def extract_links_from_workbook(wb: openpyxl.Workbook) -> list[dict]:
                         break
     return results
 
+# ── Helpers (TikTok) ─────────────────────────────────────────────────────────
+
+def is_tiktok(url: str) -> bool:
+    return "tiktok.com" in url.lower()
+
+def extract_tiktok_links_from_workbook(wb: openpyxl.Workbook) -> list[dict]:
+    results = []
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        for row in ws.iter_rows():
+            for cell in row:
+                val = str(cell.value or "").strip()
+                hyperlink = getattr(cell, "hyperlink", None)
+                href = hyperlink.target if hyperlink and hyperlink.target else ""
+
+                candidates = {val, href}
+                for candidate in candidates:
+                    if candidate and (is_tiktok(candidate) or candidate.startswith("@")):
+                        url = candidate
+                        if candidate.startswith("@"):
+                            url = f"https://www.tiktok.com/{candidate}"
+                        
+                        results.append({
+                            "sheet": sheet_name,
+                            "row": cell.row,
+                            "col": cell.column,
+                            "col_letter": cell.column_letter,
+                            "title": val if val != candidate else "",
+                            "url": url,
+                            "valid": is_tiktok(url),
+                        })
+                        break
+    return results
+
 # ── Helpers (Email) ──────────────────────────────────────────────────────────
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
@@ -170,6 +204,69 @@ def process_email_thread_func(input_path, output_path, source_col, target_col):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+# --- TikTok Routes ---
+
+@app.route("/upload_tiktok", methods=["POST"])
+def upload_tiktok():
+    global ALLOWED_URLS
+    if "file" not in request.files:
+        return jsonify({"error": "Không có file được gửi lên"}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "Tên file trống"}), 400
+
+    ext = file.filename.rsplit(".", 1)[-1].lower()
+    if ext not in ("xlsx", "xlsm", "xltx", "xltm"):
+        return jsonify({"error": f"Định dạng .{ext} không hỗ trợ. Dùng .xlsx"}), 400
+
+    try:
+        data = file.read()
+        wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
+        links = extract_tiktok_links_from_workbook(wb)
+        
+        def get_meta(l):
+            if not l["valid"]:
+                return None
+            try:
+                ydl_opts = {'quiet': True, 'no_warnings': True, 'extract_flat': True}
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(l["url"], download=False)
+                    
+                    channel_name = info.get('uploader') or info.get('title') or "Không xác định"
+                    channel_url = info.get('uploader_url') or l["url"]
+                    
+                    if channel_url:
+                        return {
+                            "channel": channel_name,
+                            "url": channel_url
+                        }
+                    return None
+            except Exception as e:
+                print(f"Error extracting TikTok {l['url']}: {e}")
+                return None
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            meta_results = list(executor.map(get_meta, links))
+            
+        unique_channels = {}
+        for m in meta_results:
+            if m and m["url"]:
+                unique_channels[m["url"]] = m["channel"]
+                ALLOWED_URLS.add(m["url"]) # Allow downloading from this channel URL
+
+        channels_list = [{"channel": v, "url": k} for k, v in unique_channels.items()]
+
+        return jsonify({
+            "filename": file.filename,
+            "sheets": wb.sheetnames,
+            "channels": channels_list,
+            "total": len(links),
+            "total_channels": len(channels_list)
+        })
+    except Exception as exc:
+        return jsonify({"error": f"Lỗi xử lý file: {exc}"}), 500
 
 # --- YT Routes ---
 
@@ -396,6 +493,105 @@ def fetch_channel():
             })
     except Exception as e:
         return jsonify({"error": f"Lỗi khi quét link: {str(e)}"}), 500
+
+# --- Direct Link Routes ---
+
+@app.route("/api/direct_info", methods=["POST"])
+def direct_info():
+    data = request.json or {}
+    url = data.get("url")
+    if not url:
+        return jsonify({"error": "Vui lòng nhập link!"}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+    }
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            
+            title = info.get("title", "Không có tiêu đề")
+            thumbnail = info.get("thumbnail", "")
+            duration = info.get("duration", 0)
+            
+            formats_out = []
+            
+            # Phân loại và cung cấp các lựa chọn tải theo yêu cầu
+            if is_youtube(url):
+                formats_out = [
+                    {"format_id": "bestvideo[height<=1080]+bestaudio/best[height<=1080]", "label": "Video 1080p", "type": "video"},
+                    {"format_id": "bestvideo[height<=720]+bestaudio/best[height<=720]", "label": "Video 720p", "type": "video"},
+                    {"format_id": "bestvideo[height<=480]+bestaudio/best[height<=480]", "label": "Video 480p", "type": "video"},
+                    {"format_id": "bestaudio/best", "label": "Audio Only (MP3)", "type": "audio"}
+                ]
+            else:
+                formats_out = [
+                    {"format_id": "best", "label": "Tải Video (Chất lượng tốt nhất)", "type": "video"},
+                    {"format_id": "bestaudio/best", "label": "Tải Audio Only", "type": "audio"}
+                ]
+
+            return jsonify({
+                "title": title,
+                "thumbnail": thumbnail,
+                "duration": duration,
+                "url": url,
+                "formats": formats_out,
+                "is_youtube": is_youtube(url)
+            })
+    except Exception as e:
+        return jsonify({"error": f"Lỗi lấy thông tin: {str(e)}"}), 500
+
+
+@app.route("/api/direct_download", methods=["POST"])
+def direct_download():
+    global app_stats
+    data = request.json or {}
+    url = data.get("url")
+    format_id = data.get("format_id")
+    is_audio = data.get("type") == "audio"
+    
+    if not url or not format_id:
+        return jsonify({"error": "Dữ liệu không hợp lệ"}), 400
+
+    download_state["stop_requested"] = False
+    download_state["is_downloading"] = True
+
+    download_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
+    os.makedirs(download_dir, exist_ok=True)
+
+    ydl_opts = {
+        'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
+        'format': format_id,
+        'quiet': False,
+        'progress_hooks': [yt_progress_hook],
+    }
+    
+    # Định dạng âm thanh thì cần FFmpeg
+    if is_audio:
+        ydl_opts['postprocessors'] = [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }]
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+            app_stats["yt_downloaded"] += 1
+            
+        if download_state["stop_requested"]:
+            return jsonify({"message": f"Đã dừng tải!", "folder": download_dir})
+        return jsonify({"message": f"Tải thành công!", "folder": download_dir})
+    except DownloadCancelled:
+        return jsonify({"message": "Đã dừng tải", "folder": download_dir})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    finally:
+        download_state["is_downloading"] = False
+        download_state["stop_requested"] = False
+
 
 # --- Email Routes ---
 
