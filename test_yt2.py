@@ -1,4 +1,6 @@
 import yt_dlp
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 ydl_opts = {'quiet': True, 'no_warnings': True, 'extract_flat': True}
 

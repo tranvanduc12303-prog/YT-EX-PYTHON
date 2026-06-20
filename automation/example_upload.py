@@ -10,13 +10,15 @@ def upload_video_workflow(profile_id: str, video_path: str, title: str, descript
     hidemium = HidemiumManager()
     
     print(f"Starting Hidemium profile {profile_id}...")
-    port = hidemium.start_profile(profile_id)
-    if not port:
+    connection_info = hidemium.start_profile(profile_id)
+    if not connection_info or "ws_endpoint" not in connection_info:
         print("Failed to start browser. Exiting.")
         return
 
+    ws_endpoint = connection_info["ws_endpoint"]
+
     print("Connecting Playwright to the browser...")
-    pw, browser, context, page = hidemium.connect_playwright(port)
+    pw, browser, context, page = hidemium.connect_playwright(ws_endpoint)
     
     try:
         # 1. Navigate to the upload page

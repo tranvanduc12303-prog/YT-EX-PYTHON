@@ -3,522 +3,666 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Excel Utilities Pro</title>
+<title>Excel Utilities Pro — Console</title>
+<!-- Tailwind, Fonts, Icons, GSAP & Chart.js -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/TextPlugin.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
-  --border:#475569; --accent:#3b82f6; --accent2:#60a5fa;
-  --text:#f8fafc; --text-muted:#94a3b8; --green:#10b981; --red:#ef4444;
-  --r:16px;
-  --shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
+:root {
+  --color-bg: #010B13;
+  --color-panel: #010B13;
+  --color-border: #2F4F4F;
+  --color-accent: #15F4EE;
+  --color-text: #f8fafc;
+  --color-muted: #94a3b8;
 }
 
-html,body{height:100%;background:var(--bg);color:var(--text);
-  font-family:'Inter',system-ui,sans-serif;font-size:14px;
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'IBM Plex Mono', monospace;
   overflow: hidden;
 }
 
-.layout {
-    display: flex;
-    height: 100vh;
+.font-heading {
+  font-family: 'Space Grotesk', sans-serif;
 }
 
-/* Sidebar */
-.sidebar {
-    width: 250px;
-    background: var(--surface);
-    border-right: 1px solid rgba(255,255,255,0.05);
-    display: flex;
-    flex-direction: column;
-    padding: 24px 16px;
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(47, 79, 79, 0.1);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 32px;
-    padding: 0 8px;
+/* Glassmorphism / Sleek console style */
+.console-panel {
+  background: rgba(1, 11, 19, 0.7);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(10px);
 }
 
-.logo-icon {
-    width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), #8b5cf6);
-    border-radius: 10px; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-}
-.logo-icon svg { width: 20px; height: 20px; fill: white; }
-.logo h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
-
-.nav-item {
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    border-radius: 10px;
-    cursor: pointer;
-    color: var(--text-muted);
-    font-weight: 500;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.nav-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-.nav-item.active { background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25); }
-
-/* Main Content */
-.main {
-    flex: 1;
-    overflow-y: auto;
-    padding: 32px 40px;
-    background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, transparent 70%);
-    background-attachment: fixed;
+.dashed-box {
+  border: 1px dashed var(--color-border);
+  background: rgba(47, 79, 79, 0.05);
 }
 
-.view { display: none; flex-direction: column; height: 100%; }
-.view.active { display: flex; }
-.view-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; color: white; }
+/* Transitions */
+.view { display: none; }
+.view.active { display: flex; flex-direction: column; animation: view-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
-/* Components */
-.drop-zone {
-    border: 2px dashed var(--border); border-radius: var(--r);
-    background: rgba(30, 41, 59, 0.4); padding: 48px 24px;
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-    cursor: pointer; transition: all .3s ease; position: relative;
-    backdrop-filter: blur(8px);
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.drop-zone:hover, .drop-zone.over {
-    border-color: var(--accent); background: rgba(59, 130, 246, 0.05);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+
+.status-pulse {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent);
 }
-.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.up-icon { width: 56px; height: 56px; background: var(--surface2); border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s; }
-.drop-zone:hover .up-icon { transform: translateY(-4px); }
-.up-icon svg { width: 28px; height: 28px; stroke: var(--accent2); fill: none; stroke-width: 1.8; }
-.drop-zone h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-.drop-zone p { color: var(--text-muted); font-size: 13px; }
 
-.btn {
-    padding: 9px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05); color: var(--text); font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
+/* Button & Dropzone glow overrides */
+.btn-console {
+  border: 1px solid var(--color-border);
+  background: rgba(47, 79, 79, 0.1);
+  color: var(--color-text);
+  transition: all 0.2s ease;
 }
-.btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); }
-.btn.primary:hover { background: var(--accent2); transform: translateY(-1px); }
-.btn.red { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: var(--red); }
-.btn.red:hover { background: rgba(239,68,68,0.2); }
-.btn:disabled { opacity: 0.5; pointer-events: none; }
-
-/* YouTube Table */
-.toolbar { display: flex; align-items: center; gap: 12px; padding: 20px 0 16px; flex-wrap: wrap; }
-.toolbar-r { margin-left: auto; display: flex; gap: 10px; }
-.tbl-wrap { flex: 1; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-thead { position: sticky; top: 0; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); z-index: 1; }
-th { text-align: left; padding: 16px; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
-td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-tbody tr:hover { background: rgba(255,255,255,0.02); }
-
-/* Email Feature Specifics */
-.email-controls { margin-top: 24px; padding: 24px; background: var(--surface); border-radius: var(--r); border: 1px solid rgba(255,255,255,0.05); }
-.form-group { margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
-.form-group label { width: 120px; color: var(--text-muted); font-size: 13px; }
-.form-group input[type="number"] {
-    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: white; padding: 8px 12px; border-radius: 6px; width: 100px;
+.btn-console:hover {
+  border-color: var(--color-accent);
+  background: rgba(21, 244, 238, 0.1);
+  color: var(--color-accent);
+  box-shadow: 0 0 10px rgba(21, 244, 238, 0.15);
 }
-.progress-container { margin-top: 20px; display: none; }
-.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #10b981); transition: width 0.3s; }
-.progress-text { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
+.btn-console-primary {
+  border: 1px solid var(--color-accent);
+  background: rgba(21, 244, 238, 0.15);
+  color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(21, 244, 238, 0.1);
+  transition: all 0.2s ease;
+}
+.btn-console-primary:hover {
+  background: var(--color-accent);
+  color: #010B13;
+  box-shadow: 0 0 20px rgba(21, 244, 238, 0.3);
+}
 
-/* Stat Cards */
-.stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px; }
-.stat-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 20px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow); position: relative; overflow: hidden; transition: transform 0.2s; }
-.stat-card:hover { transform: translateY(-3px); }
-.stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); border-top-left-radius: var(--r); border-bottom-left-radius: var(--r); }
-.stat-card.green::before { background: var(--green); }
-.stat-card.yellow::before { background: #f59e0b; }
-.stat-card.purple::before { background: #8b5cf6; }
-.stat-title { color: var(--text-muted); font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-value { font-size: 32px; font-weight: 700; color: white; line-height: 1; }
+.btn-console-red {
+  border: 1px solid #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  transition: all 0.2s ease;
+}
+.btn-console-red:hover {
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
 
-/* Charts */
-.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.chart-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 24px; }
-.chart-card h3 { font-size: 16px; margin-bottom: 16px; color: var(--text-muted); font-weight: 500; }
-.chart-container { position: relative; height: 300px; width: 100%; }
+/* Table overrides */
+table th {
+  border-bottom: 1px solid var(--color-border);
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.1em;
+}
+table td {
+  border-bottom: 1px solid rgba(47, 79, 79, 0.2);
+}
 
-/* Toast */
+/* Toast overlay */
 #toast {
-    position: fixed; bottom: 32px; right: 32px; background: var(--surface2);
-    border: 1px solid rgba(255,255,255,0.1); padding: 14px 20px; border-radius: 10px;
-    font-size: 14px; font-weight: 500; opacity: 0; transform: translateY(12px);
-    transition: all .3s; pointer-events: none; z-index: 99; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(1, 11, 19, 0.9);
+  border: 1px solid var(--color-accent);
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(21, 244, 238, 0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 100;
 }
 #toast.on { opacity: 1; transform: translateY(0); }
-
-/* Modal */
-.modal {
-    display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; 
-    overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-}
-.modal-content {
-    background-color: var(--surface); margin: 5% auto; padding: 20px;
-    border: 1px solid var(--border); border-radius: var(--r); width: 80%; max-width: 900px;
-    position: relative; box-shadow: var(--shadow);
-}
-.close-modal {
-    color: var(--text-muted); float: right; font-size: 28px; font-weight: bold; cursor: pointer;
-}
-.close-modal:hover { color: white; text-decoration: none; }
-.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; margin-top: 15px; }
-.video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
 </style>
 </head>
-<body>
+<body class="flex h-screen w-full select-none text-[#f8fafc]">
 
-<div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo">
-            <div class="logo-icon">
-                <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+  <!-- Sidebar Rail -->
+  <aside class="w-20 h-full flex flex-col items-center py-6 border-r border-[#2F4F4F] bg-[#010B13] z-50">
+    <!-- Console Logo -->
+    <div class="mb-8 text-[#15F4EE]">
+      <div class="w-12 h-12 flex items-center justify-center border border-[#15F4EE]/20 rounded-md">
+        <i class="ti ti-terminal text-2xl"></i>
+      </div>
+    </div>
+    
+    <!-- Sidebar Navigation -->
+    <nav class="flex flex-col gap-5 flex-1 w-full px-2 overflow-y-auto custom-scrollbar">
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 active text-[#15F4EE]" data-target="view-stats" title="Dashboard">
+        <i class="ti ti-layout-dashboard text-xl"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">DASH</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE]"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-yt" title="Excel Downloader">
+        <i class="ti ti-file-spreadsheet text-xl"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">YT EXCEL</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-direct" title="Direct Link Fetch">
+        <i class="ti ti-link text-xl"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">DIRECT</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-channel" title="YT Channels">
+        <i class="ti ti-video text-xl"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">YT CHN</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-tiktok" title="TikTok Excel">
+        <i class="ti ti-brand-tiktok text-xl"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">TK EXCEL</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-tiktok-channel" title="TikTok Profile/Video">
+        <i class="ti ti-brand-tiktok text-xl text-cyan-400"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">TK LINK</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-email" title="Email Extraction">
+        <i class="ti ti-mail text-xl"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">EMAIL</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+
+      <button class="nav-item group relative p-3 flex flex-col items-center gap-1 text-[#2F4F4F]" data-target="view-gmail" title="Batch Gmail Creator">
+        <i class="ti ti-mail-opened text-xl text-yellow-400"></i>
+        <span class="text-[8px] font-bold tracking-tighter uppercase opacity-60">GMAIL</span>
+        <div class="active-line absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#15F4EE] hidden"></div>
+      </button>
+    </nav>
+
+    <!-- User Profile Footer -->
+    <div class="mt-auto flex flex-col items-center gap-4 text-[#2F4F4F]">
+      <i class="ti ti-settings text-lg hover:text-[#15F4EE] cursor-pointer transition-colors"></i>
+      <div class="w-8 h-8 rounded-full border border-[#2F4F4F] flex items-center justify-center text-[10px] font-bold">EX</div>
+    </div>
+  </aside>
+
+  <!-- Main Work Environment -->
+  <div class="flex-1 flex flex-col min-w-0">
+    
+    <!-- Top System Bar -->
+    <header class="h-16 border-b border-[#2F4F4F] flex items-center justify-between px-8 bg-[#010B13]/80 backdrop-blur-xl">
+      <div class="flex items-center gap-6">
+        <span class="text-[10px] text-[#2F4F4F] font-bold tracking-[0.4em] uppercase">Excel.Utils.v4.0.1</span>
+        <div class="h-4 w-px bg-[#2F4F4F]"></div>
+        <div class="flex items-center gap-2 text-[11px] font-medium tracking-widest text-[#94a3b8] uppercase">
+          <span class="hover:text-[#15F4EE] cursor-pointer transition-colors">ROOT</span>
+          <i class="ti ti-chevron-right text-[10px]"></i>
+          <span id="breadcrumb-current" class="text-[#15F4EE]">CON_DASHBOARD</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3">
+          <div id="status-dot" class="status-pulse"></div>
+          <span class="text-[10px] font-bold tracking-[0.2em] text-[#15F4EE] uppercase">STATUS: ACTIVE</span>
+        </div>
+        <div class="h-4 w-px bg-[#2F4F4F]"></div>
+        <div class="text-[10px] font-bold tracking-[0.2em] text-[#2F4F4F] uppercase">2026.06.17 // 07:11:19</div>
+      </div>
+    </header>
+
+    <!-- View Canvas Area -->
+    <main class="flex-1 overflow-y-auto p-8 relative custom-scrollbar">
+
+      <!-- View: Dashboard & Stats -->
+      <div class="view active space-y-8" id="view-stats">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">DASHBOARD & TELEMETRY</h2>
+            <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Real-time stats monitor & data integrity mapping</p>
+          </div>
+          <button class="btn-console px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2" id="refresh-stats">
+            <i class="ti ti-refresh"></i> Refresh Telemetry
+          </button>
+        </div>
+
+        <!-- Metric Scoreboard -->
+        <div class="grid grid-cols-4 gap-6">
+          <div class="p-6 border border-[#2F4F4F] bg-[#010B13] relative overflow-hidden group">
+            <p class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-[0.2em] mb-3">Total_YT_Links</p>
+            <h3 class="font-heading text-4xl font-bold text-[#15F4EE]" id="stat-total-links">0</h3>
+            <div class="absolute top-4 right-4 text-[#2F4F4F]/20 group-hover:text-[#15F4EE]/10 transition-colors">
+              <i class="ti ti-brand-youtube text-4xl"></i>
             </div>
-            <h1>Excel Utilities</h1>
-        </div>
-        
-        <div class="nav-item active" data-target="view-yt">
-            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Excel Downloader
-        </div>
-        <div class="nav-item" data-target="view-direct">
-            <svg viewBox="0 0 24 24"><path d="M10 15v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4h8zm12 0v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4h8zM10 3v8H2V5a2 2 0 0 1 2-2h6zm12 0v8h-8V5a2 2 0 0 1 2-2h6z"></path></svg>
-            Direct Link Downloader
-        </div>
-        <div class="nav-item" data-target="view-channel">
-            <svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
-            Các kênh
-        </div>
-        <div class="nav-item" data-target="view-tiktok">
-            <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4h3.5a5.5 5.5 0 0 0 5.5 5.5h-1v-2a3.5 3.5 0 0 1-3.5-3.5H13v12a2 2 0 1 1-2-2v-2a4 4 0 0 0-2 0z"></path></svg>
-            Tải các kênh TikTok
-        </div>
-        <div class="nav-item" data-target="view-tiktok-channel">
-            <svg viewBox="0 0 24 24"><path d="M10 15v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4h8zm12 0v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4h8zM10 3v8H2V5a2 2 0 0 1 2-2h6zm12 0v8h-8V5a2 2 0 0 1 2-2h6z"></path></svg>
-            Nhập link TikTok
-        </div>
-        <div class="nav-item" data-target="view-email">
-            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            Email Autofill
-        </div>
-        <div class="nav-item" data-target="view-stats">
-            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            Dashboard & Stats
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main">
-        
-        <!-- View: YouTube -->
-        <div class="view active" id="view-yt">
-            <h2 class="view-title">YouTube Downloader</h2>
-            <div class="drop-zone" id="dz-yt">
-                <input type="file" id="fi-yt" accept=".xlsx,.xlsm"/>
-                <div class="up-icon">
-                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                </div>
-                <h2>Kéo thả file Excel vào đây</h2>
-                <p>Quét link YouTube từ file Excel</p>
+          </div>
+          <div class="p-6 border border-[#2F4F4F] bg-[#010B13] relative overflow-hidden group">
+            <p class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-[0.2em] mb-3">Purity_Links_Valid</p>
+            <h3 class="font-heading text-4xl font-bold text-[#10b981]" id="stat-valid-links">0</h3>
+            <div class="absolute top-4 right-4 text-[#2F4F4F]/20 group-hover:text-[#10b981]/10 transition-colors">
+              <i class="ti ti-circle-check text-4xl"></i>
             </div>
-
-            <div id="yt-content" style="display:none; display:flex; flex-direction:column; height:100%;">
-                <div class="toolbar">
-                    <span style="color:var(--text-muted)">Tổng số Kênh tìm thấy: <strong id="tcnt" style="color:white">0</strong></span>
-                    <div class="toolbar-r">
-                        <button class="btn" id="resetYt">↩ File mới</button>
-                    </div>
-                </div>
-                <div class="tbl-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:50px;">#</th>
-                                <th>Tên Kênh</th>
-                                <th>Link Kênh</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tb-yt"></tbody>
-                    </table>
-                </div>
+          </div>
+          <div class="p-6 border border-[#2F4F4F] bg-[#010B13] relative overflow-hidden group">
+            <p class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-[0.2em] mb-3">Downloaded_Video_Payload</p>
+            <h3 class="font-heading text-4xl font-bold text-yellow-500" id="stat-downloaded">0</h3>
+            <div class="absolute top-4 right-4 text-[#2F4F4F]/20 group-hover:text-yellow-500/10 transition-colors">
+              <i class="ti ti-download text-4xl"></i>
             </div>
+          </div>
+          <div class="p-6 border border-[#2F4F4F] bg-[#010B13] relative overflow-hidden group">
+            <p class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-[0.2em] mb-3">Extracted_Emails</p>
+            <h3 class="font-heading text-4xl font-bold text-purple-400" id="stat-emails">0</h3>
+            <div class="absolute top-4 right-4 text-[#2F4F4F]/20 group-hover:text-purple-400/10 transition-colors">
+              <i class="ti ti-mail text-4xl"></i>
+            </div>
+          </div>
         </div>
 
-        <!-- View: Direct Link Downloader -->
-        <div class="view" id="view-direct">
-            <h2 class="view-title">Nhập 1 link</h2>
-            <p style="color:var(--text-muted); margin-bottom: 20px;">Dán link YouTube hoặc TikTok vào ô dưới đây để tải về video theo yêu cầu (chọn chất lượng, tải MP3).</p>
+        <!-- Telemetry Charts -->
+        <div class="grid grid-cols-2 gap-8">
+          <div class="border border-[#2F4F4F] p-6 bg-[#010B13]">
+            <h4 class="font-heading text-xs font-bold uppercase tracking-widest text-[#15F4EE] mb-4">Link_Validity_Distribution</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="ytChart"></canvas>
+            </div>
+          </div>
+          <div class="border border-[#2F4F4F] p-6 bg-[#010B13]">
+            <h4 class="font-heading text-xs font-bold uppercase tracking-widest text-[#15F4EE] mb-4">Download_Status_Payload</h4>
+            <div class="h-64 relative">
+              <canvas id="ytDownloadChart"></canvas>
+            </div>
+          </div>
+          <div class="border border-[#2F4F4F] p-6 bg-[#010B13]">
+            <h4 class="font-heading text-xs font-bold uppercase tracking-widest text-[#15F4EE] mb-4">Top_Scraped_Channels</h4>
+            <div class="h-64 relative">
+              <canvas id="ytChannelChart"></canvas>
+            </div>
+          </div>
+          <div class="border border-[#2F4F4F] p-6 bg-[#010B13]">
+            <h4 class="font-heading text-xs font-bold uppercase tracking-widest text-[#15F4EE] mb-4">Email_Harvest_Performance</h4>
+            <div class="h-64 relative">
+              <canvas id="emailChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidemium Quick Launch -->
+        <div class="border border-[#2F4F4F] p-6 bg-[#010B13] mt-8">
+          <h4 class="font-heading text-xs font-bold uppercase tracking-widest text-[#15F4EE] mb-4 flex items-center gap-2">
+            <i class="ti ti-brand-chrome text-lg"></i> Hidemium Quick Launch
+          </h4>
+          <p class="text-[11px] text-[#94a3b8] mb-4">Launch a specific URL directly inside an isolated Hidemium browser profile.</p>
+          <div class="flex gap-4">
+            <input type="text" id="hidemium-profile-id" placeholder="Profile ID (UUID)..." class="w-64 bg-transparent border border-[#2F4F4F] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none transition-colors text-[#15F4EE] font-mono">
+            <input type="text" id="hidemium-launch-url" placeholder="https://example.com" class="flex-1 bg-transparent border border-[#2F4F4F] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none transition-colors text-[#15F4EE] font-mono">
+            <button class="btn-console-primary px-6 font-bold uppercase tracking-widest text-xs" id="btn-launch-hidemium">🚀 Launch Browser</button>
+          </div>
+          
+          <div class="flex gap-4 mt-4">
+            <button class="btn-console-primary px-4 py-2 font-bold uppercase tracking-widest text-xs flex-1 border border-[#2F4F4F] hover:border-[#15F4EE] transition-colors" onclick="quickLaunchUrl('https://www.tiktok.com')">🎵 TikTok</button>
+            <button class="btn-console-primary px-4 py-2 font-bold uppercase tracking-widest text-xs flex-1 border border-[#2F4F4F] hover:border-[#15F4EE] transition-colors" onclick="quickLaunchUrl('https://www.youtube.com')">▶️ YouTube</button>
+            <button class="btn-console-primary px-4 py-2 font-bold uppercase tracking-widest text-xs flex-1 border border-[#2F4F4F] hover:border-[#15F4EE] transition-colors" onclick="quickLaunchUrl('https://www.facebook.com')">📘 Facebook</button>
+          </div>
+
+          <!-- Excel Batch Section -->
+          <div class="mt-6 pt-6 border-t border-[#2F4F4F]">
+            <h4 class="font-heading text-xs font-bold uppercase tracking-widest text-white mb-4 flex items-center gap-2">
+              <i class="ti ti-file-spreadsheet text-lg"></i> Batch Launch via Excel
+            </h4>
+            <div class="flex gap-4">
+              <input type="file" id="hidemium-batch-file" accept=".xlsx, .xls" class="flex-1 bg-transparent border border-[#2F4F4F] px-4 py-2 text-sm focus:border-[#15F4EE] outline-none transition-colors text-white file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-xs file:font-bold file:tracking-widest file:uppercase file:bg-[#15F4EE] file:text-black hover:file:bg-[#15F4EE]/80 cursor-pointer">
+              <button class="btn-console-primary px-6 font-bold uppercase tracking-widest text-xs" id="btn-launch-batch">🚀 LAUNCH BATCH</button>
+            </div>
+            <p class="text-[10px] text-[#94a3b8] mt-2">Excel should contain columns named "Profile ID" and "URL" (or use column 1 and 2).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: YouTube Excel Downloader -->
+      <div class="view space-y-8" id="view-yt">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">YOUTUBE EXCEL INGEST</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Import binary spreadsheet to extract and queue channels</p>
+        </div>
+
+        <!-- Drop Zone Ingest -->
+        <div class="dashed-box p-12 text-center flex flex-col items-center justify-center relative cursor-pointer group hover:bg-[#15F4EE]/5 transition-all" id="dz-yt">
+          <input type="file" id="fi-yt" accept=".xlsx,.xlsm" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+          <div class="w-16 h-16 mb-6 border border-[#2F4F4F] flex items-center justify-center rounded-xl group-hover:border-[#15F4EE] transition-all">
+            <i class="ti ti-cloud-upload text-3xl text-[#2F4F4F] group-hover:text-[#15F4EE] transition-colors"></i>
+          </div>
+          <h3 class="font-heading text-lg font-bold uppercase tracking-widest text-white mb-2">INITIALIZE_BINARY_DRAG</h3>
+          <p class="text-xs text-[#94a3b8] max-w-md">Scan YouTube channels directly from structured Excel columns.</p>
+        </div>
+
+        <!-- Ingest Content Panel -->
+        <div id="yt-content" style="display:none;" class="flex flex-col gap-6">
+          <div class="flex justify-between items-center border-b border-[#2F4F4F]/40 pb-4">
+            <span class="text-xs text-[#94a3b8]">Detected Channels: <strong id="tcnt" class="text-[#15F4EE] text-sm">0</strong></span>
+            <button class="btn-console px-4 py-2 text-[10px] font-bold uppercase tracking-widest" id="resetYt">↩ File mới</button>
+          </div>
+          
+          <div class="border border-[#2F4F4F] bg-[#010B13] overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-widest bg-[#010B13]">
+                    <th class="p-4 w-16 text-center">ID</th>
+                    <th class="p-4">Channel_Name</th>
+                    <th class="p-4">Resource_URI</th>
+                    <th class="p-4 text-center">Protocol_Command</th>
+                  </tr>
+                </thead>
+                <tbody id="tb-yt" class="text-xs font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Direct Link Downloader -->
+      <div class="view space-y-8" id="view-direct">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">DIRECT LINK DESCRIPTOR</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Single resource target fetching with payload selection</p>
+        </div>
+
+        <div class="p-8 border border-[#2F4F4F] bg-[#010B13]">
+          <div class="flex gap-4">
+            <input type="text" id="direct-url" placeholder="Paste YouTube or TikTok URL target..." class="flex-1 bg-transparent border border-[#2F4F4F] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none transition-colors text-[#15F4EE] font-mono">
+            <button class="btn-console-primary px-6 font-bold uppercase tracking-widest text-xs" id="btn-fetch-direct">🔍 Fetch_Node</button>
+          </div>
+        </div>
+
+        <!-- Ingest Direct Target Content -->
+        <div id="direct-content" style="display:none;" class="p-8 border border-[#2F4F4F] bg-[#010B13] flex gap-8 items-center relative overflow-hidden group">
+          <div class="w-48 h-28 flex-shrink-0 bg-[#010B13] border border-[#2F4F4F] overflow-hidden relative rounded-md">
+            <img id="direct-thumbnail" src="" class="w-full h-full object-cover block" alt="Media frame">
+          </div>
+          <div class="flex-1 flex flex-col justify-center min-w-0">
+            <h3 id="direct-title" class="font-heading text-lg font-bold text-white mb-2 truncate">Title</h3>
+            <p class="text-[11px] text-[#94a3b8] mb-4 font-mono">Payload_Duration: <strong id="direct-duration" class="text-[#15F4EE]">0</strong> seconds</p>
             
-            <div class="email-controls" style="display:block;">
-                <div class="form-group" style="margin-bottom:0; width: 100%;">
-                    <input type="text" id="direct-url" placeholder="Nhập link YouTube hoặc TikTok..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:12px 16px; border-radius:8px; font-size:15px; outline:none; min-width: 0;">
-                    <button class="btn primary" id="btn-fetch-direct" style="white-space:nowrap; padding: 12px 20px; font-size: 15px;">🔍 Lấy Dữ Liệu</button>
-                </div>
-            </div>
-
-            <div id="direct-content" style="display:none; flex-direction:column; margin-top:20px; background: var(--surface); padding: 24px; border-radius: var(--r); border: 1px solid rgba(255,255,255,0.05); box-shadow: var(--shadow);">
-                <div style="display:flex; gap: 20px;">
-                    <div style="width: 240px; flex-shrink: 0; background: rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden; position: relative;">
-                        <img id="direct-thumbnail" src="" style="width: 100%; height: auto; display: block;" alt="Thumbnail">
-                    </div>
-                    <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
-                        <h3 id="direct-title" style="font-size: 18px; margin-bottom: 12px; color: white;">Title</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 20px;">Thời lượng: <strong id="direct-duration" style="color:white;">0</strong> giây</p>
-                        
-                        <div style="display:flex; gap: 10px; align-items:center;">
-                            <select id="direct-format-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px 14px; border-radius:8px; font-size:14px; outline:none; cursor:pointer; min-width: 200px;">
-                                <!-- Options populated via JS -->
-                            </select>
-                            
-                            <button class="btn primary" id="btn-download-direct" style="padding: 10px 20px; font-size:14px;">⬇ Tải Xuống</button>
-                            <button class="btn red" id="btn-stop-direct" style="display:none; padding: 10px 20px; font-size:14px;">⏹ Dừng</button>
-                            <button class="btn" id="btn-open-direct-folder" style="padding: 10px 20px; font-size:14px;">📂 Mở Thư Mục</button>
-                        </div>
-                        <div id="direct-progress-text" style="color: var(--accent2); margin-top: 12px; font-size: 13px; font-weight: 500;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: Channel Downloader -->
-        <div class="view" id="view-channel">
-            <h2 class="view-title">Channel Downloader</h2>
-            <div class="email-controls" style="display:block;">
-                <div class="form-group" style="margin-bottom:0; width: 100%;">
-                    <input type="text" id="channel-url" placeholder="Nhập link Channel hoặc Playlist YouTube..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px 14px; border-radius:8px; font-size:14px; outline:none; min-width: 0;">
-                    <button class="btn primary" id="btn-fetch-channel" style="white-space:nowrap; padding: 10px 16px;">🔍 Quét Video</button>
-                </div>
-            </div>
-
-            <div id="channel-content" style="display:none; flex-direction:column; height:100%; margin-top:20px; flex:1;">
-                <div class="toolbar" style="padding-top:0;">
-                    <span style="color:var(--text-muted)">Tổng: <strong id="channel-tcnt" style="color:white">0</strong> | Kênh/Danh sách: <strong id="channel-name" style="color:white">---</strong></span>
-                    <select id="channel-filter" style="margin-left:16px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:6px 12px; border-radius:6px; font-size:13px; outline:none; cursor:pointer;">
-                        <option value="all" style="background:var(--surface); color:white;">Tất cả</option>
-                        <option value="video" style="background:var(--surface); color:white;">Chỉ video dài</option>
-                        <option value="short" style="background:var(--surface); color:white;">Chỉ video ngắn (Shorts)</option>
-                    </select>
-                    <div class="toolbar-r">
-                        <button class="btn" id="openFolderChannel">📂 Thư mục</button>
-                        <button class="btn red" id="stopDownloadChannel" style="display:none">⏹ Dừng</button>
-                        <button class="btn" id="downloadSelectedChannel">⬇ Tải Đã Chọn</button>
-                        <button class="btn primary" id="downloadAllChannel">⬇ Tải Tất Cả</button>
-                    </div>
-                </div>
-                <div class="tbl-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:40px; text-align:center;"><input type="checkbox" id="chk-all-channel"/></th>
-                                <th style="width:50px;">#</th>
-                                <th>Tiêu đề</th>
-                                <th>Link</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tb-channel"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: TikTok Downloader (Excel) -->
-        <div class="view" id="view-tiktok">
-            <h2 class="view-title">Tải các kênh TikTok</h2>
-            <div class="drop-zone" id="dz-tiktok">
-                <input type="file" id="fi-tiktok" accept=".xlsx,.xlsm"/>
-                <div class="up-icon">
-                    <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4h3.5a5.5 5.5 0 0 0 5.5 5.5h-1v-2a3.5 3.5 0 0 1-3.5-3.5H13v12a2 2 0 1 1-2-2v-2a4 4 0 0 0-2 0z"></path></svg>
-                </div>
-                <h2>Kéo thả file Excel vào đây</h2>
-                <p>Quét link/tên TikTok từ file Excel</p>
-            </div>
-
-            <div id="tiktok-content" style="display:none; display:flex; flex-direction:column; height:100%;">
-                <div class="toolbar">
-                    <span style="color:var(--text-muted)">Tổng số Kênh tìm thấy: <strong id="tiktok-channel-cnt" style="color:white">0</strong></span>
-                    <div class="toolbar-r">
-                        <button class="btn" id="resetTiktok">↩ File mới</button>
-                    </div>
-                </div>
-                <div class="tbl-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:50px;">#</th>
-                                <th>Tên Kênh</th>
-                                <th>Link Kênh</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tb-tiktok"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: TikTok Channel & Direct Downloader -->
-        <div class="view" id="view-tiktok-channel">
-            <h2 class="view-title">Nhập link TikTok</h2>
-            <div class="email-controls" style="display:block;">
-                <div class="form-group" style="margin-bottom:0; width: 100%;">
-                    <input type="text" id="tiktok-channel-url" placeholder="Nhập link TikTok (Profile hoặc Video)..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px 14px; border-radius:8px; font-size:14px; outline:none; min-width: 0;">
-                    <button class="btn primary" id="btn-fetch-tiktok-channel" style="white-space:nowrap; padding: 10px 16px;">🔍 Quét Video</button>
-                </div>
-            </div>
-
-            <div id="tiktok-channel-content" style="display:none; flex-direction:column; height:100%; margin-top:20px; flex:1;">
-                <div class="toolbar" style="padding-top:0;">
-                    <span style="color:var(--text-muted)">Tổng: <strong id="tiktok-channel-tcnt" style="color:white">0</strong> | Kênh/Danh sách: <strong id="tiktok-channel-name" style="color:white">---</strong></span>
-                    <div class="toolbar-r">
-                        <button class="btn" id="openFolderTiktokChannel">📂 Thư mục</button>
-                        <button class="btn red" id="stopDownloadTiktokChannel" style="display:none">⏹ Dừng</button>
-                        <button class="btn" id="downloadSelectedTiktokChannel">⬇ Tải Đã Chọn</button>
-                        <button class="btn primary" id="downloadAllTiktokChannel">⬇ Tải Tất Cả</button>
-                    </div>
-                </div>
-                <div class="tbl-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:40px; text-align:center;"><input type="checkbox" id="chk-all-tiktok-channel"/></th>
-                                <th style="width:50px;">#</th>
-                                <th>Tiêu đề</th>
-                                <th>Link</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tb-tiktok-channel"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: Email -->
-        <div class="view" id="view-email">
-            <h2 class="view-title">Email Autofill</h2>
-            <div class="drop-zone" id="dz-email">
-                <input type="file" id="fi-email" accept=".xlsx,.xlsm"/>
-                <div class="up-icon">
-                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                </div>
-                <h2>Tải lên file Excel để quét Email</h2>
-                <p>Hỗ trợ .xlsx, .xlsm</p>
-            </div>
-
-            <div class="email-controls" id="email-controls" style="display:none;">
-                <h3 style="margin-bottom:16px;">Tùy chỉnh cột & Xử lý</h3>
-                <div class="form-group">
-                    <label>Cột Nguồn (Số):</label>
-                    <input type="number" id="email-src-col" value="1" min="1">
-                    <span style="color:var(--text-muted);font-size:12px;">(1 = A, 2 = B...)</span>
-                </div>
-                <div class="form-group">
-                    <label>Cột Đích (Số):</label>
-                    <input type="number" id="email-tgt-col" value="2" min="1">
-                </div>
-                
-                <div style="margin-top:20px; display:flex; gap:10px;">
-                    <button class="btn primary" id="btn-start-email">▶ Bắt đầu trích xuất</button>
-                    <button class="btn red" id="btn-stop-email" disabled>⏹ Dừng</button>
-                    <button class="btn" id="btn-download-email" style="display:none;">⬇ Tải file kết quả</button>
-                    <button class="btn" id="resetEmail">↩ Hủy</button>
-                </div>
-
-                <div class="progress-container" id="email-progress-container">
-                    <div class="progress-bar"><div class="progress-fill" id="email-progress-fill"></div></div>
-                    <div class="progress-text">
-                        <span id="email-progress-status">Đang xử lý... 0%</span>
-                        <span id="email-stats-text">0/0 hàng - 0 email tìm thấy</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: Stats -->
-        <div class="view" id="view-stats">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <h2 class="view-title" style="margin-bottom:0;">Dashboard & Thống kê</h2>
-                <button class="btn" id="refresh-stats">🔄 Làm mới dữ liệu</button>
+            <div class="flex items-center gap-4 flex-wrap">
+              <select id="direct-format-select" class="bg-[#010B13] border border-[#2F4F4F] text-[#15F4EE] text-xs px-3 py-2 outline-none cursor-pointer focus:border-[#15F4EE] font-mono rounded-none"></select>
+              
+              <button class="btn-console-primary px-5 py-2 text-xs font-bold uppercase tracking-widest" id="btn-download-direct">⬇ Ingest_Payload</button>
+              <button class="btn-console-red px-5 py-2 text-xs font-bold uppercase tracking-widest" id="btn-stop-direct" style="display:none;">⏹ Interrupt</button>
+              <button class="btn-console px-5 py-2 text-xs font-bold uppercase tracking-widest" id="btn-open-direct-folder">📂 Open_Folder</button>
             </div>
             
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <span class="stat-title">Tổng số Link YouTube</span>
-                    <span class="stat-value" id="stat-total-links">0</span>
-                </div>
-                <div class="stat-card green">
-                    <span class="stat-title">Link Hợp Lệ</span>
-                    <span class="stat-value" id="stat-valid-links">0</span>
-                </div>
-                <div class="stat-card yellow">
-                    <span class="stat-title">Video Đã Tải</span>
-                    <span class="stat-value" id="stat-downloaded">0</span>
-                </div>
-                <div class="stat-card purple">
-                    <span class="stat-title">Email Đã Trích Xuất</span>
-                    <span class="stat-value" id="stat-emails">0</span>
-                </div>
-            </div>
-
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <h3>YouTube: Tỷ lệ Link hợp lệ</h3>
-                    <div class="chart-container">
-                        <canvas id="ytChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3>YouTube: Trạng thái tải về</h3>
-                    <div class="chart-container">
-                        <canvas id="ytDownloadChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3>YouTube: Thống kê Kênh</h3>
-                    <div class="chart-container">
-                        <canvas id="ytChannelChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3>Email: Trích xuất theo Sheet</h3>
-                    <div class="chart-container">
-                        <canvas id="emailChart"></canvas>
-                    </div>
-                </div>
-            </div>
+            <div id="direct-progress-text" class="text-xs text-[#15F4EE] font-bold mt-4 font-mono"></div>
+          </div>
         </div>
+      </div>
+
+      <!-- View: Channel YT Downloader -->
+      <div class="view space-y-8" id="view-channel">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">CHANNEL PAYLOAD DESCRIPTOR</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Siphon playlist or full channel targets completely</p>
+        </div>
+
+        <div class="p-8 border border-[#2F4F4F] bg-[#010B13]">
+          <div class="flex gap-4">
+            <input type="text" id="channel-url" placeholder="Target channel or playlist URL string..." class="flex-1 bg-transparent border border-[#2F4F4F] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none transition-colors text-[#15F4EE] font-mono">
+            <button class="btn-console-primary px-6 font-bold uppercase tracking-widest text-xs" id="btn-fetch-channel">🔍 Analyze_Resource</button>
+          </div>
+        </div>
+
+        <!-- Channel Content Ingested -->
+        <div id="channel-content" style="display:none;" class="flex flex-col gap-6">
+          <div class="flex items-center justify-between border-b border-[#2F4F4F]/40 pb-4 flex-wrap gap-4">
+            <div class="flex items-center gap-4 text-xs font-mono">
+              <span class="text-[#94a3b8]">Target: <strong id="channel-name" class="text-white">---</strong></span>
+              <div class="w-px h-3 bg-[#2F4F4F]"></div>
+              <span class="text-[#94a3b8]">Payloads: <strong id="channel-tcnt" class="text-[#15F4EE]">0</strong></span>
+            </div>
+            <div class="flex items-center gap-3">
+              <select id="channel-filter" class="bg-[#010B13] border border-[#2F4F4F] text-xs text-[#94a3b8] px-3 py-1.5 focus:border-[#15F4EE] outline-none font-mono">
+                <option value="all">ALL_RESOURCES</option>
+                <option value="video">LONG_FORM_ONLY</option>
+                <option value="short">SHORTS_ONLY</option>
+              </select>
+              <button class="btn-console px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="openFolderChannel">📂 Shell.Dir</button>
+              <button class="btn-console-red px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="stopDownloadChannel" style="display:none;">⏹ KILL_TASK</button>
+              <button class="btn-console px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="downloadSelectedChannel">⬇ Download_Selected</button>
+              <button class="btn-console-primary px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="downloadAllChannel">⬇ Bulk_All</button>
+            </div>
+          </div>
+
+          <div class="border border-[#2F4F4F] bg-[#010B13] overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-widest bg-[#010B13]">
+                    <th class="p-4 w-12 text-center"><input type="checkbox" id="chk-all-channel" class="accent-[#15F4EE]"/></th>
+                    <th class="p-4 w-16 text-center">ID</th>
+                    <th class="p-4">Resource_Descriptor_Title</th>
+                    <th class="p-4 text-center">Protocol_Command</th>
+                  </tr>
+                </thead>
+                <tbody id="tb-channel" class="text-xs font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: TikTok Downloader (Excel) -->
+      <div class="view space-y-8" id="view-tiktok">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">TIKTOK EXCEL BATCH INGEST</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Siphon video streams directly via Excel dataset mapping</p>
+        </div>
+
+        <div class="dashed-box p-12 text-center flex flex-col items-center justify-center relative cursor-pointer group hover:bg-[#15F4EE]/5 transition-all" id="dz-tiktok">
+          <input type="file" id="fi-tiktok" accept=".xlsx,.xlsm" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"/>
+          <div class="w-16 h-16 mb-6 border border-[#2F4F4F] flex items-center justify-center rounded-xl group-hover:border-[#15F4EE] transition-all">
+            <i class="ti ti-brand-tiktok text-3xl text-[#2F4F4F] group-hover:text-[#15F4EE] transition-colors"></i>
+          </div>
+          <h3 class="font-heading text-lg font-bold uppercase tracking-widest text-white mb-2">TIKTOK_DATASET_DRAG</h3>
+          <p class="text-xs text-[#94a3b8] max-w-md">Extract multiple TikTok profiles from your spreadsheet arrays.</p>
+        </div>
+
+        <div id="tiktok-content" style="display:none;" class="flex flex-col gap-6">
+          <div class="flex justify-between items-center border-b border-[#2F4F4F]/40 pb-4">
+            <span class="text-xs text-[#94a3b8]">Detected Profiles: <strong id="tiktok-channel-cnt" class="text-[#15F4EE] text-sm">0</strong></span>
+            <button class="btn-console px-4 py-2 text-[10px] font-bold uppercase tracking-widest" id="resetTiktok">↩ File mới</button>
+          </div>
+          
+          <div class="border border-[#2F4F4F] bg-[#010B13] overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-widest bg-[#010B13]">
+                    <th class="p-4 w-16 text-center">ID</th>
+                    <th class="p-4">Profile_Handle</th>
+                    <th class="p-4">Resource_URI</th>
+                    <th class="p-4 text-center">Protocol_Command</th>
+                  </tr>
+                </thead>
+                <tbody id="tb-tiktok" class="text-xs font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: TikTok Channel & Direct Downloader -->
+      <div class="view space-y-8" id="view-tiktok-channel">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">TIKTOK RESOURCE FETCH</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Query individual profile or specific TikTok media nodes</p>
+        </div>
+
+        <div class="p-8 border border-[#2F4F4F] bg-[#010B13]">
+          <div class="flex gap-4">
+            <input type="text" id="tiktok-channel-url" placeholder="Target TikTok profile or video node URL..." class="flex-1 bg-transparent border border-[#2F4F4F] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none transition-colors text-[#15F4EE] font-mono">
+            <button class="btn-console-primary px-6 font-bold uppercase tracking-widest text-xs" id="btn-fetch-tiktok-channel">🔍 Query_TikTok</button>
+          </div>
+        </div>
+
+        <!-- TikTok Content Loaded -->
+        <div id="tiktok-channel-content" style="display:none;" class="flex flex-col gap-6">
+          <div class="flex items-center justify-between border-b border-[#2F4F4F]/40 pb-4 flex-wrap gap-4">
+            <div class="flex items-center gap-4 text-xs font-mono">
+              <span class="text-[#94a3b8]">Entity: <strong id="tiktok-channel-name" class="text-white">---</strong></span>
+              <div class="w-px h-3 bg-[#2F4F4F]"></div>
+              <span class="text-[#94a3b8]">Feeds: <strong id="tiktok-channel-tcnt" class="text-[#15F4EE]">0</strong></span>
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="btn-console px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="openFolderTiktokChannel">📂 Shell.Dir</button>
+              <button class="btn-console-red px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="stopDownloadTiktokChannel" style="display:none;">⏹ Interrupt_Task</button>
+              <button class="btn-console px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="downloadSelectedTiktokChannel">⬇ Download_Selected</button>
+              <button class="btn-console-primary px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest" id="downloadAllTiktokChannel">⬇ Bulk_Download_All</button>
+            </div>
+          </div>
+
+          <div class="border border-[#2F4F4F] bg-[#010B13] overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-widest bg-[#010B13]">
+                    <th class="p-4 w-12 text-center"><input type="checkbox" id="chk-all-tiktok-channel" class="accent-[#15F4EE]"/></th>
+                    <th class="p-4 w-16 text-center">ID</th>
+                    <th class="p-4">Video_Description_Descriptor</th>
+                    <th class="p-4 text-center">Protocol_Command</th>
+                  </tr>
+                </thead>
+                <tbody id="tb-tiktok-channel" class="text-xs font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Email Extraction Autofill -->
+      <div class="view space-y-8" id="view-email">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">EMAIL DIGEST HARVESTER</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Map and extract electronic mail entities from worksheets</p>
+        </div>
+
+        <div class="dashed-box p-12 text-center flex flex-col items-center justify-center relative cursor-pointer group hover:bg-[#15F4EE]/5 transition-all" id="dz-email">
+          <input type="file" id="fi-email" accept=".xlsx,.xlsm" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"/>
+          <div class="w-16 h-16 mb-6 border border-[#2F4F4F] flex items-center justify-center rounded-xl group-hover:border-[#15F4EE] transition-all">
+            <i class="ti ti-mail-spark text-3xl text-[#2F4F4F] group-hover:text-[#15F4EE] transition-colors"></i>
+          </div>
+          <h3 class="font-heading text-lg font-bold uppercase tracking-widest text-white mb-2">SPREADSHEET_HARVEST_DRAG</h3>
+          <p class="text-xs text-[#94a3b8] max-w-md">Import structured files (.xlsx, .xlsm) to parse mail vectors.</p>
+        </div>
+
+        <div class="p-8 border border-[#2F4F4F] bg-[#010B13] space-y-6" id="email-controls" style="display:none;">
+          <h3 class="font-heading text-md font-bold uppercase tracking-widest text-white border-b border-[#2F4F4F]/40 pb-3">HARVESTER_VECTOR_CONFIGURATION</h3>
+          
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-wider block mb-2">Source_Column_Vector (1 = A, 2 = B...)</label>
+              <input type="number" id="email-src-col" value="1" min="1" class="w-full bg-[#010B13] border border-[#2F4F4F] text-[#15F4EE] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none font-mono">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-[#2F4F4F] uppercase tracking-wider block mb-2">Target_Output_Vector</label>
+              <input type="number" id="email-tgt-col" value="2" min="1" class="w-full bg-[#010B13] border border-[#2F4F4F] text-[#15F4EE] px-4 py-3 text-sm focus:border-[#15F4EE] outline-none font-mono">
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 pt-4">
+            <button class="btn-console-primary px-6 py-3 font-bold uppercase tracking-widest text-xs" id="btn-start-email">▶ Begin_Harvest</button>
+            <button class="btn-console-red px-6 py-3 font-bold uppercase tracking-widest text-xs" id="btn-stop-email" disabled>⏹ Terminate</button>
+            <button class="btn-console px-6 py-3 font-bold uppercase tracking-widest text-xs" id="btn-download-email" style="display:none;">⬇ Export_Spreadsheet_Result</button>
+            <button class="btn-console px-6 py-3 font-bold uppercase tracking-widest text-xs" id="resetEmail">↩ Hủy / Reset</button>
+          </div>
+
+          <!-- Progress Ingest -->
+          <div class="progress-container border border-[#2F4F4F] p-6 bg-[#010B13] relative overflow-hidden" id="email-progress-container">
+            <div class="w-full h-1.5 bg-[#010B13] border border-[#2F4F4F] overflow-hidden mb-3">
+              <div class="h-full bg-gradient-to-r from-[#15F4EE] to-[#10b981] transition-all duration-300 w-0" id="email-progress-fill"></div>
+            </div>
+            <div class="flex justify-between items-center text-xs font-mono text-[#94a3b8]">
+              <span id="email-progress-status" class="text-white">STATUS: IDLE ... 0%</span>
+              <span id="email-stats-text">0/0 Rows Parsed - 0 Valid Mails Captured</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Gmail Creator -->
+      <div class="view space-y-8" id="view-gmail">
+        <div>
+          <h2 class="font-heading text-2xl font-bold tracking-widest text-white uppercase">BATCH GMAIL ENGINE</h2>
+          <p class="text-[11px] text-[#2F4F4F] tracking-wide uppercase mt-1">Multi-threaded Hidemium automated profile provisioner</p>
+        </div>
+
+        <div class="p-8 border border-[#2F4F4F] bg-[#010B13] space-y-6">
+          <p class="text-xs text-[#94a3b8] leading-relaxed max-w-xl">Triggers Playwright automated flows through isolated Hidemium anti-detect browsers to generate completely secure Google mail accounts.</p>
+          <button class="btn-console-primary px-6 py-3.5 font-bold uppercase tracking-widest text-xs shadow-[0_0_15px_rgba(21,244,238,0.2)]" id="btn-run-gmail">🚀 INITIATE_GMAIL_FLOW</button>
+          
+          <!-- Terminal stream console window -->
+          <div class="border border-[#2F4F4F] bg-[#010B13] overflow-hidden" id="gmail-log-container">
+            <div class="p-3 bg-[#010B13] border-b border-[#2F4F4F] flex items-center justify-between">
+              <div class="flex gap-1.5">
+                <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+              </div>
+              <span class="text-[10px] text-[#2F4F4F] font-bold tracking-widest uppercase">STREAMING_PLAYWRIGHT_LOG_TERMINAL</span>
+              <div class="w-10"></div>
+            </div>
+            <div id="gmail-log" class="p-6 font-mono text-xs text-[#15F4EE]/90 h-96 overflow-y-auto custom-scrollbar bg-[#010B13]/40" style="display:none;">
+              Chờ lệnh chạy...
+            </div>
+          </div>
+        </div>
+      </div>
 
     </main>
+  </div>
 </div>
 
-<div id="videoModal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeVideoModal()">&times;</span>
-        <h3 id="videoModalTitle" style="color: white; margin-bottom: 10px; padding-right: 30px; font-size: 18px;"></h3>
-        <div class="video-wrapper">
-            <iframe id="videoIframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
+<!-- Modal: Video Play Frame -->
+<div id="videoModal" class="modal fixed inset-0 z-50 overflow-auto bg-black/85 backdrop-blur-md hidden">
+  <div class="modal-content console-panel max-w-3xl w-full mx-auto my-12 p-6 rounded-none relative">
+    <span class="close-modal absolute top-4 right-4 text-3xl text-[#2F4F4F] hover:text-white cursor-pointer transition-colors" onclick="closeVideoModal()">&times;</span>
+    <h3 id="videoModalTitle" class="font-heading text-lg font-bold text-white mb-4 pr-12 truncate">Video Engine Monitor</h3>
+    <div class="video-wrapper aspect-video bg-[#010B13] border border-[#2F4F4F]">
+      <iframe id="videoIframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
+  </div>
 </div>
 
 <div id="toast"></div>
 
+<!-- Original Flow Script Sync -->
 <script>
 function getEmbedUrl(url) {
     let videoId = '';
@@ -552,13 +696,15 @@ function openVideoModal(url, title) {
     const titleEl = document.getElementById('videoModalTitle');
     titleEl.textContent = title || 'Video';
     iframe.src = embedUrl;
-    modal.style.display = 'block';
+    modal.classList.remove('hidden');
+    // Animate Modal Entrance
+    gsap.fromTo(".modal-content", { scale: 0.95, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" });
 }
 
 function closeVideoModal() {
     const modal = document.getElementById('videoModal');
     const iframe = document.getElementById('videoIframe');
-    modal.style.display = 'none';
+    modal.classList.add('hidden');
     iframe.src = '';
 }
 
@@ -568,19 +714,32 @@ window.addEventListener('click', function(event) {
         closeVideoModal();
     }
 });
-// --- Navigation ---
+
+// --- Navigation Flow ---
 const navItems = document.querySelectorAll('.nav-item');
 const views = document.querySelectorAll('.view');
 let currentChartInstances = {};
 
 navItems.forEach(item => {
     item.addEventListener('click', () => {
-        navItems.forEach(n => n.classList.remove('active'));
+        navItems.forEach(n => {
+            n.classList.remove('active', 'text-[#15F4EE]');
+            n.classList.add('text-[#2F4F4F]');
+            n.querySelector('.active-line').classList.add('hidden');
+        });
         views.forEach(v => v.classList.remove('active'));
-        item.classList.add('active');
-        document.getElementById(item.dataset.target).classList.add('active');
         
-        if(item.dataset.target === 'view-stats') {
+        item.classList.add('active', 'text-[#15F4EE]');
+        item.classList.remove('text-[#2F4F4F]');
+        item.querySelector('.active-line').classList.remove('hidden');
+        
+        const targetViewId = item.dataset.target;
+        document.getElementById(targetViewId).classList.add('active');
+        
+        // Update breadcrumb
+        document.getElementById('breadcrumb-current').textContent = "CON_" + targetViewId.replace("view-", "").toUpperCase();
+        
+        if(targetViewId === 'view-stats') {
             loadStats();
         }
     });
@@ -602,7 +761,7 @@ fiYt.addEventListener('change', async e => {
     const file = e.target.files[0];
     if(!file) return;
     
-    document.getElementById('dz-yt').querySelector('h2').textContent = '⏳ Đang phân tích thông tin kênh... (Vui lòng đợi)';
+    dzYt.querySelector('h3').textContent = '⏳ INGESTING_BINARY_DATASET...';
     
     const fd = new FormData();
     fd.append('file', file);
@@ -618,23 +777,25 @@ fiYt.addEventListener('change', async e => {
         document.getElementById('tcnt').textContent = data.total_channels;
         
         renderYtTable(ytChannels);
-        loadStats(); // Update chart on successful upload
-    } catch(err) { toast('❌ Lỗi kết nối server'); }
+        loadStats(); 
+        
+        // GSAP Batch Reveal Stagger
+        gsap.fromTo('#tb-yt tr', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05 });
+    } catch(err) { toast('❌ Connection Refused'); }
     
-    document.getElementById('dz-yt').querySelector('h2').textContent = 'Kéo thả file Excel vào đây';
+    dzYt.querySelector('h3').textContent = 'INITIALIZE_BINARY_DRAG';
 });
 
 function renderYtTable(channels) {
     const tb = document.getElementById('tb-yt');
     tb.innerHTML = channels.map((c, i) => `
-        <tr>
-            <td>${i+1}</td>
-            <td style="font-weight:500; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.channel}">${c.channel}</td>
-            <td><a href="${c.url}" target="_blank" style="color:var(--text-muted); font-size:12px; text-decoration:none;">${c.url}</a></td>
-            <td>
-                <button class="btn" data-url="${c.url}" onclick="fetchChannelVideos(this.dataset.url)" style="color:var(--accent2); border-color:var(--accent2); background:rgba(96,165,250,0.1);">
-                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
-                    Tải Video Từ Kênh
+        <tr class="hover:bg-[#15F4EE]/5 transition-all">
+            <td class="p-4 text-center text-[#2F4F4F] font-bold">${i+1}</td>
+            <td class="p-4 font-bold text-white max-w-[250px] truncate" title="${c.channel}">${c.channel}</td>
+            <td class="p-4 text-[#94a3b8] font-mono select-all text-xs">${c.url}</td>
+            <td class="p-4 text-center">
+                <button class="btn-console px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mx-auto" data-url="${c.url}" onclick="fetchChannelVideos(this.dataset.url)">
+                    <i class="ti ti-video"></i> SIPHON_CHANNEL
                 </button>
             </td>
         </tr>
@@ -642,7 +803,6 @@ function renderYtTable(channels) {
 }
 
 function fetchChannelVideos(url) {
-    // Switch view to channel downloader
     document.querySelector('.nav-item[data-target="view-channel"]').click();
     document.getElementById('channel-url').value = url;
     document.getElementById('btn-fetch-channel').click();
@@ -663,7 +823,7 @@ fiTiktok.addEventListener('change', async e => {
     const file = e.target.files[0];
     if(!file) return;
     
-    document.getElementById('dz-tiktok').querySelector('h2').textContent = '⏳ Đang quét kênh TikTok... (Vui lòng đợi)';
+    dzTiktok.querySelector('h3').textContent = '⏳ INGESTING_BINARY_DATASET...';
     
     const fd = new FormData();
     fd.append('file', file);
@@ -678,24 +838,24 @@ fiTiktok.addEventListener('change', async e => {
             document.getElementById('tiktok-channel-cnt').textContent = data.total_channels;
             
             renderTiktokTable(data.channels);
-            toast('✅ Quét thành công!');
+            toast('✅ Binary Data Ingest Success!');
+            gsap.fromTo('#tb-tiktok tr', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05 });
         }
-    } catch(err) { toast('❌ Lỗi kết nối server'); }
+    } catch(err) { toast('❌ Connection Refused'); }
     
-    document.getElementById('dz-tiktok').querySelector('h2').textContent = 'Kéo thả file Excel vào đây';
+    dzTiktok.querySelector('h3').textContent = 'TIKTOK_DATASET_DRAG';
 });
 
 function renderTiktokTable(channels) {
     const tb = document.getElementById('tb-tiktok');
     tb.innerHTML = channels.map((c, i) => `
-        <tr>
-            <td>${i+1}</td>
-            <td style="font-weight:500; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.channel}">${c.channel}</td>
-            <td><a href="${c.url}" target="_blank" style="color:var(--text-muted); font-size:12px; text-decoration:none;">${c.url}</a></td>
-            <td>
-                <button class="btn" data-url="${c.url}" onclick="fetchTiktokChannelVideos(this.dataset.url)" style="color:var(--accent2); border-color:var(--accent2); background:rgba(96,165,250,0.1);">
-                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.13 1 12 1 12s0 3.87.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.87 23 12 23 12s0-3.87-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon></svg>
-                    Tải Video Từ Kênh
+        <tr class="hover:bg-[#15F4EE]/5 transition-all">
+            <td class="p-4 text-center text-[#2F4F4F] font-bold">${i+1}</td>
+            <td class="p-4 font-bold text-white max-w-[250px] truncate" title="${c.channel}">${c.channel}</td>
+            <td class="p-4 text-[#94a3b8] font-mono select-all text-xs">${c.url}</td>
+            <td class="p-4 text-center">
+                <button class="btn-console px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mx-auto" data-url="${c.url}" onclick="fetchTiktokChannelVideos(this.dataset.url)">
+                    <i class="ti ti-brand-tiktok"></i> SIPHON_TIKTOK
                 </button>
             </td>
         </tr>
@@ -721,10 +881,10 @@ const tiktokChannelContent = document.getElementById('tiktok-channel-content');
 
 btnFetchTiktokChannel.addEventListener('click', async () => {
     const url = tiktokChannelUrlInput.value.trim();
-    if (!url) { toast('❌ Vui lòng nhập link!'); return; }
+    if (!url) { toast('❌ Target Vector Empty!'); return; }
     
     btnFetchTiktokChannel.disabled = true;
-    btnFetchTiktokChannel.textContent = '⏳ Đang quét...';
+    btnFetchTiktokChannel.textContent = '⏳ Analyzing...';
     
     try {
         const res = await fetch('/fetch_channel', {
@@ -740,25 +900,26 @@ btnFetchTiktokChannel.addEventListener('click', async () => {
             tiktokChannelContent.style.display = 'flex';
             document.getElementById('tiktok-channel-tcnt').textContent = data.videos.length;
             renderTiktokChannelTable(data.videos);
-            toast('✅ Đã quét xong!');
+            toast('✅ Channel Parsed!');
+            gsap.fromTo('#tb-tiktok-channel tr', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05 });
         }
-    } catch(err) { toast('❌ Lỗi kết nối'); }
+    } catch(err) { toast('❌ Connection Refused'); }
     
     btnFetchTiktokChannel.disabled = false;
-    btnFetchTiktokChannel.textContent = '🔍 Quét Video';
+    btnFetchTiktokChannel.textContent = '🔍 Query_TikTok';
 });
 
 function renderTiktokChannelTable(videos) {
     const tb = document.getElementById('tb-tiktok-channel');
     tb.innerHTML = videos.map((v, i) => `
-        <tr>
-            <td style="text-align:center;"><input type="checkbox" class="chk-tiktok-channel-row" data-url="${v.url}"/></td>
-            <td>${i+1}</td>
-            <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${v.title}">${v.title}</td>
-            <td>
-                <div style="display:flex; gap:12px; align-items:center;">
-                    <a href="${v.url}" target="_blank" style="color:var(--accent2);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Xem Video</a>
-                    <a href="javascript:void(0)" data-url="${v.url}" onclick="triggerTiktokChannelDownload([this.dataset.url])" style="color:var(--green);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Tải Xuống</a>
+        <tr class="hover:bg-[#15F4EE]/5 transition-all">
+            <td class="p-4 text-center"><input type="checkbox" class="chk-tiktok-channel-row accent-[#15F4EE]" data-url="${v.url}"/></td>
+            <td class="p-4 text-center text-[#2F4F4F] font-bold">${i+1}</td>
+            <td class="p-4 text-white max-w-[300px] truncate" title="${v.title}">${v.title}</td>
+            <td class="p-4">
+                <div class="flex gap-4 justify-center items-center">
+                    <a href="${v.url}" target="_blank" class="text-[#15F4EE] hover:underline flex items-center gap-1"><i class="ti ti-player-play"></i> Watch</a>
+                    <a href="javascript:void(0)" data-url="${v.url}" onclick="triggerTiktokChannelDownload([this.dataset.url])" class="text-[#10b981] hover:underline flex items-center gap-1"><i class="ti ti-download"></i> Ingest</a>
                 </div>
             </td>
         </tr>
@@ -773,7 +934,7 @@ document.getElementById('chk-all-tiktok-channel').addEventListener('change', e =
 });
 
 async function triggerTiktokChannelDownload(urls) {
-    if (!urls.length) { toast('❌ Không có video nào được chọn'); return; }
+    if (!urls.length) { toast('❌ No resource vectors selected'); return; }
     
     document.getElementById('downloadSelectedTiktokChannel').disabled = true;
     document.getElementById('downloadAllTiktokChannel').disabled = true;
@@ -787,7 +948,7 @@ async function triggerTiktokChannelDownload(urls) {
         });
         const data = await res.json();
         toast(data.error ? '❌ ' + data.error : '✅ ' + data.message);
-    } catch(e) { toast('❌ Lỗi tải'); }
+    } catch(e) { toast('❌ Payload ingestion failed'); }
     
     document.getElementById('downloadSelectedTiktokChannel').disabled = false;
     document.getElementById('downloadAllTiktokChannel').disabled = false;
@@ -856,7 +1017,7 @@ document.getElementById('btn-start-email').addEventListener('click', async () =>
         // Bắt đầu poll
         emailPollInterval = setInterval(pollEmailProgress, 1000);
     } catch(e) {
-        toast('❌ Lỗi gửi file');
+        toast('❌ Ingest Refused');
         resetEmailBtns();
     }
 });
@@ -872,20 +1033,20 @@ async function pollEmailProgress() {
         const data = await res.json();
         
         document.getElementById('email-progress-fill').style.width = data.progress + '%';
-        document.getElementById('email-progress-status').textContent = `Đang xử lý... ${data.progress}%`;
-        document.getElementById('email-stats-text').textContent = `${data.processed_rows}/${data.total_rows} hàng - ${data.emails_found} email`;
+        document.getElementById('email-progress-status').textContent = `STATUS: ACTIVE ... ${data.progress}%`;
+        document.getElementById('email-stats-text').textContent = `${data.processed_rows}/${data.total_rows} Rows - ${data.emails_found} Valid Mails Captured`;
         
         if (data.status === 'completed' || data.status === 'stopped' || data.status === 'error') {
             stopEmailPolling();
             resetEmailBtns();
-            document.getElementById('email-progress-status').textContent = data.status === 'completed' ? 'Hoàn tất!' : (data.status === 'error' ? 'Lỗi!' : 'Đã dừng!');
+            document.getElementById('email-progress-status').textContent = data.status === 'completed' ? 'FLOW ENTIRELY COMPLETED!' : (data.status === 'error' ? 'HARVEST ENCOUNTERED AN ERROR!' : 'INTERRUPTED!');
             if (data.status === 'completed' || (data.status === 'stopped' && data.processed_rows > 0)) {
                 document.getElementById('btn-download-email').style.display = 'inline-flex';
             }
             if (data.error_msg) toast('❌ ' + data.error_msg);
-            else toast('✅ Đã xong tiến trình email!');
+            else toast('✅ Harvester tasks successfully complete!');
         }
-    } catch(e) { console.log("Lỗi poll", e); }
+    } catch(e) { console.log("Polling failure", e); }
 }
 
 function stopEmailPolling() {
@@ -908,8 +1069,8 @@ function createChart(id, type, data, options) {
     const ctx = document.getElementById(id).getContext('2d');
     if (currentChartInstances[id]) currentChartInstances[id].destroy();
     
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+    Chart.defaults.color = '#2F4F4F';
+    Chart.defaults.borderColor = 'rgba(47, 79, 79, 0.2)';
     
     currentChartInstances[id] = new Chart(ctx, { type, data, options });
 }
@@ -930,23 +1091,24 @@ async function loadStats() {
         // YT Link Validity Chart (Doughnut)
         const invalidLinks = aStats.yt_total_links - aStats.yt_valid_links;
         createChart('ytChart', 'doughnut', {
-            labels: ['Hợp lệ', 'Không hợp lệ'],
+            labels: ['VALID', 'INVALID'],
             datasets: [{
                 data: [aStats.yt_valid_links, invalidLinks],
                 backgroundColor: ['#10b981', '#ef4444'],
-                borderWidth: 0
+                borderWidth: 1,
+                borderColor: '#010B13'
             }]
         }, { responsive: true, maintainAspectRatio: false });
 
         // YT Download Status (Bar)
         const pending = Math.max(0, aStats.yt_valid_links - aStats.yt_downloaded);
         createChart('ytDownloadChart', 'bar', {
-            labels: ['Đã tải', 'Chưa tải (Hợp lệ)'],
+            labels: ['DOWNLOADED', 'PENDING'],
             datasets: [{
-                label: 'Số lượng Video',
+                label: 'Payload Nodes',
                 data: [aStats.yt_downloaded, pending],
-                backgroundColor: ['#3b82f6', '#64748b'],
-                borderRadius: 4
+                backgroundColor: ['#15F4EE', '#64748b'],
+                borderRadius: 0
             }]
         }, { 
             responsive: true, maintainAspectRatio: false,
@@ -960,12 +1122,12 @@ async function loadStats() {
         const ytChCounts = Object.values(ytChStats);
         
         createChart('ytChannelChart', 'bar', {
-            labels: ytChNames.length ? ytChNames : ['Chưa có dữ liệu'],
+            labels: ytChNames.length ? ytChNames : ['NO DATA AVAILABLE'],
             datasets: [{
-                label: 'Số video trong Excel',
+                label: 'Siphoned Nodes',
                 data: ytChCounts.length ? ytChCounts : [0],
                 backgroundColor: '#f59e0b',
-                borderRadius: 4
+                borderRadius: 0
             }]
         }, { 
             responsive: true, maintainAspectRatio: false,
@@ -977,12 +1139,12 @@ async function loadStats() {
         const emailCounts = Object.values(data.email_sheet_stats);
         
         createChart('emailChart', 'bar', {
-            labels: sheetNames.length ? sheetNames : ['Chưa có dữ liệu'],
+            labels: sheetNames.length ? sheetNames : ['NO DATA AVAILABLE'],
             datasets: [{
-                label: 'Email trích xuất',
+                label: 'Emails Extracted',
                 data: emailCounts.length ? emailCounts : [0],
                 backgroundColor: '#8b5cf6',
-                borderRadius: 4
+                borderRadius: 0
             }]
         }, { 
             responsive: true, maintainAspectRatio: false,
@@ -990,7 +1152,7 @@ async function loadStats() {
         });
         
     } catch (e) {
-        toast('❌ Lỗi tải thống kê');
+        toast('❌ Telemetry Payload Request Failed');
     }
 }
 
@@ -1003,10 +1165,10 @@ let currentDirectData = null;
 
 btnFetchDirect.addEventListener('click', async () => {
     const url = directUrlInput.value.trim();
-    if (!url) { toast('❌ Vui lòng nhập link!'); return; }
+    if (!url) { toast('❌ Resource Target URI empty!'); return; }
     
     btnFetchDirect.disabled = true;
-    btnFetchDirect.textContent = '⏳ Đang lấy dữ liệu...';
+    btnFetchDirect.textContent = '⏳ Querying...';
     directContent.style.display = 'none';
     
     try {
@@ -1027,12 +1189,13 @@ btnFetchDirect.addEventListener('click', async () => {
             formatSelect.innerHTML = data.formats.map(f => `<option value="${f.format_id}" data-type="${f.type}">${f.label}</option>`).join('');
             
             directContent.style.display = 'flex';
-            toast('✅ Đã lấy dữ liệu!');
+            toast('✅ Resource Parsed Successfully!');
+            gsap.fromTo(directContent, { scale: 0.98, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3 });
         }
-    } catch(err) { toast('❌ Lỗi kết nối'); }
+    } catch(err) { toast('❌ Payload Resolution Error'); }
     
     btnFetchDirect.disabled = false;
-    btnFetchDirect.textContent = '🔍 Lấy Dữ Liệu';
+    btnFetchDirect.textContent = '🔍 Fetch_Node';
 });
 
 document.getElementById('btn-download-direct').addEventListener('click', async () => {
@@ -1044,7 +1207,7 @@ document.getElementById('btn-download-direct').addEventListener('click', async (
     
     document.getElementById('btn-download-direct').disabled = true;
     document.getElementById('btn-stop-direct').style.display = 'inline-flex';
-    document.getElementById('direct-progress-text').textContent = '⏳ Đang tải xuống... Vui lòng đợi.';
+    document.getElementById('direct-progress-text').textContent = '⏳ INGESTING STREAM PAYLOAD... PLEASE OBSERVE.';
     
     try {
         const res = await fetch('/api/direct_download', {
@@ -1060,15 +1223,15 @@ document.getElementById('btn-download-direct').addEventListener('click', async (
         
         if (data.error) {
             toast('❌ ' + data.error);
-            document.getElementById('direct-progress-text').textContent = '❌ Lỗi: ' + data.error;
+            document.getElementById('direct-progress-text').textContent = '❌ EXCEPTION_OCCURRED: ' + data.error;
         } else {
             toast('✅ ' + data.message);
-            document.getElementById('direct-progress-text').textContent = '✅ ' + data.message;
+            document.getElementById('direct-progress-text').textContent = '✅ INGEST_COMPLETE: ' + data.message;
             loadStats();
         }
     } catch(err) { 
-        toast('❌ Lỗi kết nối');
-        document.getElementById('direct-progress-text').textContent = '❌ Lỗi kết nối server.';
+        toast('❌ Connection Refused');
+        document.getElementById('direct-progress-text').textContent = '❌ CONNECTION_TERMINATED_PREMATURELY.';
     }
     
     document.getElementById('btn-download-direct').disabled = false;
@@ -1077,7 +1240,7 @@ document.getElementById('btn-download-direct').addEventListener('click', async (
 
 document.getElementById('btn-stop-direct').addEventListener('click', async () => {
     fetch('/stop_download', { method: 'POST' });
-    document.getElementById('direct-progress-text').textContent = '⏹ Đang dừng tải...';
+    document.getElementById('direct-progress-text').textContent = '⏹ HALTING INGESTION PROCESS...';
 });
 
 document.getElementById('btn-open-direct-folder').addEventListener('click', async () => {
@@ -1104,14 +1267,15 @@ function filterAndRenderChannelVideos(filterType) {
     
     document.getElementById('channel-tcnt').textContent = filteredVideos.length;
     renderChannelTable(filteredVideos);
+    gsap.fromTo('#tb-channel tr', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05 });
 }
 
 btnFetchChannel.addEventListener('click', async () => {
     const url = channelUrlInput.value.trim();
-    if (!url) { toast('❌ Vui lòng nhập link!'); return; }
+    if (!url) { toast('❌ Resource URL target missing!'); return; }
     
     btnFetchChannel.disabled = true;
-    btnFetchChannel.textContent = '⏳ Đang quét...';
+    btnFetchChannel.textContent = '⏳ Querying...';
     
     try {
         const res = await fetch('/fetch_channel', {
@@ -1128,25 +1292,25 @@ btnFetchChannel.addEventListener('click', async () => {
             document.getElementById('channel-name').textContent = data.channel_title;
             channelContent.style.display = 'flex';
             filterAndRenderChannelVideos('all');
-            toast('✅ Đã quét xong!');
+            toast('✅ Channel elements cataloged!');
         }
-    } catch(err) { toast('❌ Lỗi kết nối'); }
+    } catch(err) { toast('❌ Ingest Refused'); }
     
     btnFetchChannel.disabled = false;
-    btnFetchChannel.textContent = '🔍 Quét Video';
+    btnFetchChannel.textContent = '🔍 Analyze_Resource';
 });
 
 function renderChannelTable(videos) {
     const tb = document.getElementById('tb-channel');
     tb.innerHTML = videos.map((v, i) => `
-        <tr>
-            <td style="text-align:center;"><input type="checkbox" class="chk-channel-row" data-url="${v.url}"/></td>
-            <td>${i+1}</td>
-            <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" title="${v.title}" data-url="${v.url}" data-title="${(v.title || '').replace(/"/g, '&quot;')}" onclick="openVideoModal(this.dataset.url, this.dataset.title)">${v.title}</td>
-            <td>
-                <div style="display:flex; gap:12px; align-items:center;">
-                    <a href="javascript:void(0)" data-url="${v.url}" data-title="${(v.title || '').replace(/"/g, '&quot;')}" onclick="openVideoModal(this.dataset.url, this.dataset.title)" style="color:var(--accent2);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Xem Video</a>
-                    <a href="javascript:void(0)" data-url="${v.url}" onclick="triggerChannelDownload([this.dataset.url])" style="color:var(--green);text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Tải Xuống</a>
+        <tr class="hover:bg-[#15F4EE]/5 transition-all">
+            <td class="p-4 text-center"><input type="checkbox" class="chk-channel-row accent-[#15F4EE]" data-url="${v.url}"/></td>
+            <td class="p-4 text-center text-[#2F4F4F] font-bold">${i+1}</td>
+            <td class="p-4 text-white font-bold cursor-pointer max-w-[300px] truncate" title="${v.title}" data-url="${v.url}" data-title="${(v.title || '').replace(/"/g, '&quot;')}" onclick="openVideoModal(this.dataset.url, this.dataset.title)">${v.title}</td>
+            <td class="p-4 text-center">
+                <div class="flex gap-4 justify-center items-center">
+                    <a href="javascript:void(0)" data-url="${v.url}" data-title="${(v.title || '').replace(/"/g, '&quot;')}" onclick="openVideoModal(this.dataset.url, this.dataset.title)" class="text-[#15F4EE] hover:underline flex items-center gap-1"><i class="ti ti-player-play"></i> Watch</a>
+                    <a href="javascript:void(0)" data-url="${v.url}" onclick="triggerChannelDownload([this.dataset.url])" class="text-[#10b981] hover:underline flex items-center gap-1"><i class="ti ti-download"></i> Ingest</a>
                 </div>
             </td>
         </tr>
@@ -1161,7 +1325,7 @@ document.getElementById('chk-all-channel').addEventListener('change', e => {
 });
 
 async function triggerChannelDownload(urls) {
-    if (!urls.length) { toast('❌ Không có video nào được chọn'); return; }
+    if (!urls.length) { toast('❌ No payloads selected'); return; }
     
     document.getElementById('downloadSelectedChannel').disabled = true;
     document.getElementById('downloadAllChannel').disabled = true;
@@ -1175,8 +1339,8 @@ async function triggerChannelDownload(urls) {
         });
         const data = await res.json();
         toast(data.error ? '❌ ' + data.error : '✅ ' + data.message);
-        loadStats(); // Cập nhật biểu đồ sau khi tải
-    } catch(e) { toast('❌ Lỗi tải'); }
+        loadStats(); 
+    } catch(e) { toast('❌ Siphon script failure'); }
     
     document.getElementById('downloadSelectedChannel').disabled = false;
     document.getElementById('downloadAllChannel').disabled = false;
@@ -1200,7 +1364,142 @@ document.getElementById('stopDownloadChannel').addEventListener('click', async (
 document.getElementById('openFolderChannel').addEventListener('click', async () => {
     fetch('/open_folder', { method: 'POST' });
 });
+
+// --- Gmail Creator Logic ---
+const btnRunGmail = document.getElementById('btn-run-gmail');
+const gmailLog = document.getElementById('gmail-log');
+
+btnRunGmail.addEventListener('click', async () => {
+    btnRunGmail.disabled = true;
+    btnRunGmail.textContent = '⏳ Executing...';
+    gmailLog.style.display = 'block';
+    gmailLog.innerHTML = 'ENGINE: Initiating automated task stream sequence...<br>';
+    
+    try {
+        const res = await fetch('/run_gmail_creator', { method: 'POST' });
+        const data = await res.json();
+        
+        if(data.error) { 
+            toast('❌ Task Refused: ' + data.error);
+            gmailLog.innerHTML += `<span style="color:#ef4444;">EXCEPTION_ENCOUNTERED: ${data.error}</span><br>`;
+        } else {
+            toast('✅ Automated provisioning launched in background!');
+            gmailLog.innerHTML += `✅ Flow successfully bound and detached.<br>Observe host node console output for detailed thread logs.<br>`;
+            
+            // GSAP Typing effect simulation
+            gsap.to(gmailLog, {
+              duration: 2,
+              scrollTo: { y: "max" }
+            });
+        }
+    } catch(e) {
+        toast('❌ Connection Failure');
+        gmailLog.innerHTML += '<span style="color:#ef4444;">STREAM_CONNECTION_TIMEOUT</span><br>';
+    }
+    
+    btnRunGmail.disabled = false;
+    btnRunGmail.textContent = '🚀 INITIATE_GMAIL_FLOW';
+});
+
+// Ambient live heartbeat pulse
+gsap.to('#status-dot', {
+    boxShadow: '0 0 15px #15F4EE',
+    duration: 1.5,
+    repeat: -1,
+    yoyo: true,
+    ease: "power1.inOut"
+});
+
+// --- Hidemium Quick Launch Logic ---
+const btnLaunchHidemium = document.getElementById('btn-launch-hidemium');
+if(btnLaunchHidemium) {
+    btnLaunchHidemium.addEventListener('click', async () => {
+        const profileId = document.getElementById('hidemium-profile-id').value.trim();
+        const url = document.getElementById('hidemium-launch-url').value.trim();
+
+        if(!profileId || !url) {
+            toast('❌ Please enter both Profile ID and URL');
+            return;
+        }
+
+        btnLaunchHidemium.disabled = true;
+        btnLaunchHidemium.textContent = '⏳ Launching...';
+
+        try {
+            const res = await fetch('/launch_hidemium', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profile_id: profileId, url: url })
+            });
+            const data = await res.json();
+            
+            if(data.error) {
+                toast('❌ ' + data.error);
+            } else {
+                toast('✅ ' + data.message);
+            }
+        } catch(e) {
+            toast('❌ Connection Failed');
+        }
+
+        btnLaunchHidemium.disabled = false;
+        btnLaunchHidemium.textContent = '🚀 Launch Browser';
+    });
+}
+
+function quickLaunchUrl(targetUrl) {
+    const profileId = document.getElementById('hidemium-profile-id').value.trim();
+    if(!profileId) {
+        toast('❌ Please enter a Profile ID first');
+        return;
+    }
+    
+    // Tự động điền URL và kích hoạt nút Launch
+    document.getElementById('hidemium-launch-url').value = targetUrl;
+    if(btnLaunchHidemium) {
+        btnLaunchHidemium.click();
+    }
+}
+
+const btnLaunchBatch = document.getElementById('btn-launch-batch');
+if(btnLaunchBatch) {
+    btnLaunchBatch.addEventListener('click', async () => {
+        const fileInput = document.getElementById('hidemium-batch-file');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            toast('❌ Please select an Excel file first');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        btnLaunchBatch.disabled = true;
+        btnLaunchBatch.textContent = '⏳ UPLOADING...';
+
+        try {
+            const res = await fetch('/launch_hidemium_batch', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if(data.error) {
+                toast('❌ ' + data.error);
+            } else {
+                toast('✅ ' + data.message);
+                fileInput.value = ''; // Reset
+            }
+        } catch(e) {
+            toast('❌ Connection Failed');
+        }
+
+        btnLaunchBatch.disabled = false;
+        btnLaunchBatch.textContent = '🚀 LAUNCH BATCH';
+    });
+}
+
+// Initial Load Telemetry
+loadStats();
 </script>
 </body>
 </html>
-</html></html>

@@ -1,74 +1,103 @@
 import requests
 from playwright.sync_api import sync_playwright
 
+BASE_URL = "http://localhost:2222"
+
 class HidemiumManager:
     """
-    Helper class to integrate with the Hidemium V4 Local API and connect Playwright.
+    Helper class to integrate with the Hidemium API and connect Playwright.
     """
-    def __init__(self, api_url="http://127.0.0.1:2222"): 
+    def __init__(self, api_url=BASE_URL): 
         self.api_url = api_url
 
-    def open_hidemium_profile(self, profile_id: str):
+    def start_profile(self, profile_id: str):
         """
-        Starts a Hidemium profile via its V4 API and retrieves the CDP/WebSocket connection details.
-        Usually passes the profile's `id` parameter.
+        Starts a Hidemium profile via its API and retrieves the CDP/WebSocket connection details.
+        Endpoint: http://localhost:2222/openProfile?uuid={profile_id}
         """
-        start_endpoint = f"{self.api_url}/api/v4/profile/start"
-        params = {"id": profile_id}
+        # API URL as requested by user (fixed to the correct one)
+        start_endpoint = f"{self.api_url}/openProfile?uuid={profile_id}"
         
         try:
-            response = requests.get(start_endpoint, params=params)
+            print(f"[*] Đang gọi API Hidemium: {start_endpoint}")
+            response = requests.get(start_endpoint)
             response.raise_for_status()
             data = response.json()
             
-            # Extract WebSocket endpoint or debug port from Hidemium's JSON response
-            # Note: The exact JSON structure depends on Hidemium's actual response. 
-            # We attempt standard locations for antidetect browsers.
+            # In ra toàn bộ response từ Hidemium để dễ debug lỗi "không kết nối được"
+            print(f"[*] Response từ Hidemium API ({profile_id}): {data}")
+            
             ws_endpoint = None
             
+            # Parse response from Hidemium v4/v5 API
             if "data" in data and isinstance(data["data"], dict):
-                ws_data = data["data"].get("ws", {})
-                if isinstance(ws_data, dict):
-                    ws_endpoint = ws_data.get("playwright") or ws_data.get("puppeteer")
-                else:
-                    ws_endpoint = data["data"].get("ws_endpoint") or data["data"].get("wsEndpoint")
-                    
+                ws_endpoint = data["data"].get("web_socket")
+                port = data["data"].get("remote_port") or data["data"].get("port")
+                
+            # Fallback nếu api không trả về web_socket trực tiếp nhưng có port
+            if not ws_endpoint and port:
+                ws_endpoint = f"ws://127.0.0.1:{port}/devtools/browser"
+                
             if not ws_endpoint:
-                ws_endpoint = data.get("wsEndpoint") or data.get("ws_endpoint")
+                print(f"[-] Không tìm thấy thông tin cổng kết nối CDP hoặc WebSocket URL trong response: {data}")
+                return None
                 
-            port = data.get("port") or (data.get("data", {}).get("port"))
-
-            if ws_endpoint:
-                return {"ws_endpoint": ws_endpoint, "port": port}
-            elif port:
-                # If only port is provided, Playwright can connect to http://127.0.0.1:<port>
-                return {"ws_endpoint": f"http://127.0.0.1:{port}", "port": port}
-            else:
-                # Fallback to returning the raw response data if we couldn't parse the exact keys
-                return data
-                
+            return {
+                "ws_endpoint": ws_endpoint,
+                "profile_id": profile_id
+            }
+            
+        except requests.exceptions.ConnectionError:
+            print(f"[-] Lỗi KẾT NỐI API: Không thể kết nối tới {self.api_url}. Hãy chắc chắn rằng app Hidemium đang mở và API được cấu hình chạy ở port 2222.")
+            return None
         except requests.exceptions.RequestException as e:
-            print(f"Error starting Hidemium profile (API Call failed): {e}")
+            print(f"[-] Lỗi khi gọi API khởi động Hidemium profile: {e}")
             return None
         except Exception as e:
-            print(f"Error parsing Hidemium response: {e}")
+            print(f"[-] Lỗi khi xử lý phản hồi từ Hidemium: {e}")
             return None
 
-    def close_hidemium_profile(self, profile_id: str):
+    def stop_profile(self, profile_id: str):
         """
-        Closes a running Hidemium profile via its V4 Local API.
+        Closes a running Hidemium profile via its API.
+        Endpoint: http://localhost:2222/closeProfile?uuid={profile_id}
         """
-        stop_endpoint = f"{self.api_url}/api/v4/profile/stop"
-        # Sometimes close endpoints use /api/v4/profile/close or /stop. 
-        # Adapt if Hidemium's docs specify 'close' instead of 'stop'.
-        params = {"id": profile_id}
+        stop_endpoint = f"{self.api_url}/closeProfile?uuid={profile_id}"
         
         try:
-            response = requests.get(stop_endpoint, params=params)
+            response = requests.get(stop_endpoint)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error closing Hidemium profile: {e}")
+            print(f"[-] Lỗi khi gọi API đóng Hidemium profile: {e}")
+            return None
+
+    def get_schedules(self):
+        """
+        Retrieves the list of automation schedules.
+        Endpoint: GET http://localhost:2222/automation/schedule
+        """
+        endpoint = f"{self.api_url}/automation/schedule"
+        try:
+            response = requests.get(endpoint)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"[-] Lỗi khi gọi API lấy danh sách schedule: {e}")
+            return None
+
+    def create_schedule(self, payload: dict):
+        """
+        Creates a new automation schedule.
+        Endpoint: POST http://localhost:2222/automation/schedule
+        """
+        endpoint = f"{self.api_url}/automation/schedule"
+        try:
+            response = requests.post(endpoint, json=payload)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"[-] Lỗi khi gọi API tạo schedule: {e}")
             return None
 
     def connect_playwright(self, ws_endpoint: str):

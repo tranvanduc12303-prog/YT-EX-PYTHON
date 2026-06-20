@@ -9,8 +9,46 @@ import yt_dlp
 
 from state import ALLOWED_URLS, app_stats, download_state, DownloadCancelled, DOWNLOAD_DIR
 from utils import extract_links_from_workbook, yt_progress_hook
+from automation.youtube_uploader import upload_video_to_youtube
 
 youtube_bp = Blueprint('youtube', __name__)
+
+@youtube_bp.route("/upload_video", methods=["POST"])
+def api_upload_video():
+    """
+    Automates uploading a video to YouTube using Hidemium + Playwright.
+    Expected JSON body:
+    {
+        "profile_id": "...",
+        "video_path": "C:\\path\\to\\video.mp4",
+        "title": "Video Title",
+        "description": "Video Description"
+    }
+    """
+    data = request.json or {}
+    profile_id = data.get("profile_id")
+    video_path = data.get("video_path")
+    title = data.get("title", "No Title")
+    description = data.get("description", "")
+    
+    if not all([profile_id, video_path]):
+        return jsonify({"error": "Missing profile_id or video_path"}), 400
+        
+    try:
+        # We can run this in a separate thread if we don't want to block the Flask route,
+        # but for simplicity and returning the immediate result, we run it synchronously.
+        result = upload_video_to_youtube(
+            profile_id=profile_id, 
+            video_path=video_path, 
+            title=title, 
+            description=description
+        )
+        if result.get("success"):
+            return jsonify({"message": "Upload process completed successfully.", "details": result})
+        else:
+            return jsonify({"error": result.get("error", "Unknown error occurred.")}), 500
+    except Exception as e:
+        return jsonify({"error": f"Failed to run upload script: {e}"}), 500
 
 @youtube_bp.route("/upload", methods=["POST"])
 def upload():
